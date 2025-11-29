@@ -73,7 +73,8 @@ function DemographicsForm() {
 
             alert("Thank you! Your information has been saved.");
             // Navigate to next step or home
-            router.push("/");
+            // Navigate to Part A
+            router.push(`/part-a?participant_id=${participantId}`);
         } catch (error) {
             console.error(error);
             alert("An error occurred. Please try again.");
