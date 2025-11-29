@@ -28,6 +28,7 @@ export default function PartBPage() {
     const [phase, setPhase] = useState<Phase>("instructions");
     const [timeLeft, setTimeLeft] = useState(0); // Seconds
     const [view, setView] = useState<View>("story-selection");
+    const [visitedStories, setVisitedStories] = useState<Set<number>>(new Set());
 
     // Data State
     const [stories, setStories] = useState<Story[]>([]);
@@ -55,6 +56,7 @@ export default function PartBPage() {
     useEffect(() => {
         if (phase === "practice" || phase === "formal") {
             fetchStories(phase);
+            setVisitedStories(new Set()); // Reset visited stories on phase change
         }
     }, [phase]);
 
@@ -92,6 +94,8 @@ export default function PartBPage() {
     };
 
     const handleSelectStory = async (story: Story) => {
+        if (visitedStories.has(story.id)) return; // Prevent selecting visited stories
+
         setCurrentStory(story);
         try {
             const res = await fetch(`/api/part-b/segments?storyId=${story.id}`);
@@ -116,13 +120,31 @@ export default function PartBPage() {
             logAction(currentStory!.id, segments[currentSegmentIndex].id, "continue", 0); // TODO: Add real reading time
         } else {
             alert("Story finished! Please select another story.");
+            markStoryAsVisited(currentStory!.id);
             setView("story-selection");
         }
     };
 
     const handleSwitch = () => {
+        markStoryAsVisited(currentStory!.id);
         setView("story-selection");
         logAction(currentStory!.id, segments[currentSegmentIndex].id, "switch", 0); // TODO: Add real reading time
+    };
+
+    const markStoryAsVisited = (storyId: number) => {
+        setVisitedStories(prev => {
+            const newSet = new Set(prev);
+            newSet.add(storyId);
+            return newSet;
+        });
+    };
+
+    const handleNextSection = () => {
+        if (phase === "practice") {
+            startFormal();
+        } else if (phase === "formal") {
+            setPhase("finished");
+        }
     };
 
     const logAction = async (storyId: number, segmentId: number | null, actionType: string, readingTimeMs: number) => {
@@ -151,6 +173,8 @@ export default function PartBPage() {
     };
 
     if (!participantId) return <div>Missing Participant ID</div>;
+
+    const allStoriesVisited = stories.length > 0 && stories.every(s => visitedStories.has(s.id));
 
     return (
         <div className="min-h-screen flex flex-col items-center bg-gray-50 p-8 relative">
@@ -186,17 +210,40 @@ export default function PartBPage() {
                 <div className="max-w-4xl w-full mt-20">
                     <h2 className="text-2xl font-bold mb-6 text-center">Select a Story</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {stories.map((story) => (
-                            <button
-                                key={story.id}
-                                onClick={() => handleSelectStory(story)}
-                                className="bg-white p-6 rounded shadow hover:shadow-lg transition-shadow text-left border border-gray-200"
-                            >
-                                <h3 className="text-xl font-semibold text-blue-600">{story.title}</h3>
-                                <p className="text-gray-500 mt-2 text-sm">Click to start reading</p>
-                            </button>
-                        ))}
+                        {stories.map((story) => {
+                            const isVisited = visitedStories.has(story.id);
+                            return (
+                                <button
+                                    key={story.id}
+                                    onClick={() => handleSelectStory(story)}
+                                    disabled={isVisited}
+                                    className={`p-6 rounded shadow text-left border transition-all ${isVisited
+                                            ? "bg-gray-100 border-gray-200 cursor-not-allowed opacity-60"
+                                            : "bg-white border-gray-200 hover:shadow-lg hover:border-blue-300"
+                                        }`}
+                                >
+                                    <h3 className={`text-xl font-semibold ${isVisited ? "text-gray-500" : "text-blue-600"}`}>
+                                        {story.title}
+                                    </h3>
+                                    <p className="text-gray-500 mt-2 text-sm">
+                                        {isVisited ? "Completed / Skipped" : "Click to start reading"}
+                                    </p>
+                                </button>
+                            );
+                        })}
                     </div>
+
+                    {allStoriesVisited && (
+                        <div className="mt-12 text-center">
+                            <p className="mb-4 text-gray-600">You have visited all available stories.</p>
+                            <button
+                                onClick={handleNextSection}
+                                className="bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 shadow-md transition-colors"
+                            >
+                                {phase === "practice" ? "Start Formal Task" : "Finish Part B"}
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 
