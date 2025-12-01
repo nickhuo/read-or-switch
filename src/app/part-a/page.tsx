@@ -1,10 +1,18 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function PartAPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PartAContent />
+        </Suspense>
+    );
+}
+
+function PartAContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const participantId = searchParams.get("participant_id");

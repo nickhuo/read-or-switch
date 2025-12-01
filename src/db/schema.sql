@@ -104,13 +104,19 @@ CREATE TABLE IF NOT EXISTS participant_actions (
     FOREIGN KEY (segment_id) REFERENCES story_segments(id)
 );
 
-CREATE TABLE IF NOT EXISTS part_b_summaries (
+CREATE TABLE IF NOT EXISTS story_responses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     participant_id BIGINT NOT NULL,
+    story_id INT NOT NULL,
     phase ENUM('practice', 'formal') NOT NULL,
-    content TEXT,
+    summary TEXT,
+    q1_new_info INT COMMENT '0-100 scale',
+    q2_difficulty INT COMMENT '0-100 scale',
+    q3_learning_article INT COMMENT '0-100 scale',
+    q4_learning_overall INT COMMENT '0-100 scale',
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (story_id) REFERENCES stories(id)
 );
 
 -- Seed Stories (Mock Data)
