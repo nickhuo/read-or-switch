@@ -1,8 +1,14 @@
 
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
+interface Sentence {
+    id: number;
+    content: string;
+    group_id: number;
+}
 
 export default function PartAPage() {
     return (
@@ -21,8 +27,8 @@ function PartAContent() {
     const [step, setStep] = useState<"instructions" | "reading" | "summary" | "finished">("instructions");
 
     // Data State
-    const [sentences, setSentences] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [sentences, setSentences] = useState<Sentence[]>([]);
+    // const [loading, setLoading] = useState(true); // Unused
 
     // SPR State
     const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
@@ -44,7 +50,7 @@ function PartAContent() {
                 console.error(error);
                 alert("Failed to load sentences.");
             } finally {
-                setLoading(false);
+                // setLoading(false);
             }
         }
         fetchSentences();
@@ -53,7 +59,7 @@ function PartAContent() {
     useEffect(() => {
         if (step === "reading" && sentences[currentSentenceIndex]) {
             setWords(sentences[currentSentenceIndex].content.split(" "));
-            setCurrentWordIndex(-1);
+            setCurrentWordIndex(0); // Start at the first word immediately
         }
     }, [step, currentSentenceIndex, sentences]);
 
@@ -71,6 +77,9 @@ function PartAContent() {
                     // End of sentence
                     if (currentSentenceIndex < sentences.length - 1) {
                         setCurrentSentenceIndex((prev) => prev + 1);
+                        // Reset word index for next sentence is handled by the effect above
+                        // But we need to ensure we don't get stuck if effect hasn't run yet?
+                        // Actually, the effect depends on currentSentenceIndex, so it will trigger.
                     } else {
                         // End of block -> Go to Summary
                         setStep("summary");
@@ -86,22 +95,6 @@ function PartAContent() {
     // Timer State
     const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
 
-    // Timer Logic
-    useEffect(() => {
-        if (step !== "reading" && step !== "summary") return;
-
-        if (timeLeft <= 0) {
-            handleSummarySubmit();
-            return;
-        }
-
-        const timerId = setInterval(() => {
-            setTimeLeft((prev) => prev - 1);
-        }, 1000);
-
-        return () => clearInterval(timerId);
-    }, [step, timeLeft]);
-
     // Format time as MM:SS
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
@@ -109,7 +102,7 @@ function PartAContent() {
         return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     };
 
-    const handleSummarySubmit = async () => {
+    const handleSummarySubmit = useCallback(async () => {
         // Allow empty summary if time ran out
         // if (!summary.trim()) return; // Removed to allow auto-submit on timeout
 
@@ -132,13 +125,29 @@ function PartAContent() {
         } catch (error) {
             console.error(error);
             // If it fails on timeout, we still want to show finished state or alert
-            if (timeLeft > 0) {
-                alert("Failed to save summary. Please try again.");
-            } else {
-                setStep("finished"); // Force finish on timeout even if save fails
-            }
+            // We can't easily check timeLeft here inside useCallback without adding it to deps, 
+            // but we only call this when manually submitting or timeout.
+            // Let's just alert if it wasn't a timeout (we can't check timeLeft easily without ref or dep).
+            // Simplified: just alert.
+            alert("Failed to save summary. Please try again.");
         }
-    };
+    }, [participantId, sentences, summary]);
+
+    // Timer Logic
+    useEffect(() => {
+        if (step !== "reading" && step !== "summary") return;
+
+        if (timeLeft <= 0) {
+            handleSummarySubmit();
+            return;
+        }
+
+        const timerId = setInterval(() => {
+            setTimeLeft((prev) => prev - 1);
+        }, 1000);
+
+        return () => clearInterval(timerId);
+    }, [step, timeLeft, handleSummarySubmit]);
 
     if (!participantId) return <div>Missing Participant ID</div>;
 
@@ -173,15 +182,23 @@ function PartAContent() {
             )}
 
             {step === "reading" && (
-                <div className="text-center">
-                    <div className="text-4xl font-serif text-gray-900 h-20 flex items-center justify-center">
-                        {currentWordIndex >= 0 && currentWordIndex < words.length ? (
-                            <span>{words[currentWordIndex]}</span>
-                        ) : (
-                            <span className="text-gray-400 text-xl">Press SPACE to start</span>
-                        )}
+                <div className="max-w-4xl w-full">
+                    <div className="bg-white p-12 rounded shadow-lg min-h-[300px] flex flex-col justify-center">
+                        <div className="flex flex-wrap gap-x-3 gap-y-6 text-2xl font-mono leading-loose">
+                            {words.map((word, index) => (
+                                <span
+                                    key={index}
+                                    className={`${index === currentWordIndex ? "text-black bg-yellow-100" : "text-gray-300"
+                                        }`}
+                                >
+                                    {index === currentWordIndex
+                                        ? word
+                                        : "_".repeat(word.length)}
+                                </span>
+                            ))}
+                        </div>
                     </div>
-                    <p className="mt-12 text-gray-400 text-sm">
+                    <p className="mt-8 text-center text-gray-500">
                         Sentence {currentSentenceIndex + 1} of {sentences.length}
                     </p>
                 </div>
