@@ -153,3 +153,107 @@ SELECT id, CONCAT('Segment ', n, ' content for ', title), n, TRUE
 FROM stories 
 JOIN (SELECT 1 as n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) numbers
 WHERE title != 'The Lost Key';
+
+-- ==========================================
+-- Part 3: Cognitive Tests
+-- ==========================================
+
+-- Letter Comparison Problems (Static Content)
+CREATE TABLE IF NOT EXISTS letter_comparison_problems (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    string_1 VARCHAR(255) NOT NULL,
+    string_2 VARCHAR(255) NOT NULL,
+    is_same BOOLEAN NOT NULL
+);
+
+-- Letter Comparison Responses
+CREATE TABLE IF NOT EXISTS part3_letter_comparison_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    problem_id INT NOT NULL,
+    response_same BOOLEAN NOT NULL COMMENT 'User response: True if they thought it was same',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (problem_id) REFERENCES letter_comparison_problems(id)
+);
+
+-- Vocabulary Questions (Static Content)
+CREATE TABLE IF NOT EXISTS vocabulary_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    word VARCHAR(255) NOT NULL,
+    option_1 VARCHAR(255) NOT NULL,
+    option_2 VARCHAR(255) NOT NULL,
+    option_3 VARCHAR(255) NOT NULL,
+    option_4 VARCHAR(255) NOT NULL,
+    option_5 VARCHAR(255) NOT NULL,
+    correct_option INT NOT NULL COMMENT '1-5'
+);
+
+-- Vocabulary Responses
+CREATE TABLE IF NOT EXISTS part3_vocabulary_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT COMMENT '1-6, where 6 is "Not sure"',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES vocabulary_questions(id)
+);
+
+-- ==========================================
+-- Part 4: Final Assessment
+-- ==========================================
+
+-- Comprehension Questions (Static Content)
+CREATE TABLE IF NOT EXISTS comprehension_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    question_text TEXT NOT NULL,
+    option_1 TEXT NOT NULL,
+    option_2 TEXT NOT NULL,
+    option_3 TEXT NOT NULL,
+    option_4 TEXT NOT NULL,
+    correct_option INT NOT NULL COMMENT '1-4',
+    FOREIGN KEY (story_id) REFERENCES stories(id)
+);
+
+-- Comprehension Responses
+CREATE TABLE IF NOT EXISTS part4_comprehension_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT NOT NULL COMMENT '1-4',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES comprehension_questions(id)
+);
+
+-- Seed Data for Cognitive Tests (Mock)
+INSERT IGNORE INTO letter_comparison_problems (string_1, string_2, is_same) VALUES
+('PRDBZTYFN', 'PRDBZTYFN', TRUE),
+('NCWJDZ', 'NCMJDZ', FALSE),
+('KHW', 'KBW', FALSE),
+('ZRBGMF', 'ZRBCMF', FALSE),
+('BTH', 'BYH', FALSE),
+('XWKQRYCNZ', 'XWKQRYCNZ', TRUE),
+('HNPDLK', 'HNPDLK', TRUE),
+('WMQTRSGLZ', 'WMQTRZGLZ', FALSE),
+('JPN', 'JPN', TRUE),
+('QLXSVT', 'QLNSVT', FALSE);
+
+INSERT IGNORE INTO vocabulary_questions (word, option_1, option_2, option_3, option_4, option_5, correct_option) VALUES
+('mumble', 'speak indistinctly', 'complain', 'handle awkwardly', 'fall over something', 'tear apart', 1),
+('perspire', 'struggle', 'sweat', 'happen', 'penetrate', 'submit', 2),
+('gush', 'giggle', 'spout', 'sprinkle', 'hurry', 'cry', 2);
+
+INSERT IGNORE INTO comprehension_questions (story_id, question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
+(1, 'A medical supplier is interested in understanding the market size of bone graft material. What kind of population may be in the market?', 'an athlete with severe fractures', 'a retiree with significant bone loss', 'a patient suffering from cancer', 'all of the above', 4),
+(1, 'A tissue banks is responsible for screening the medical histories of the donors and freeze the donated bones (T/F)', 'TRUE', 'FALSE', '', '', 1),
+(1, 'What could be a risk that is associated with surgical procedure of bone graft?', 'osteoporosis', 'infection', 'muscle atrophy', 'nerve damage', 2),
+(1, 'Due to ethical concerns, all bone graft materials can only come from donors who have died (T/F)', 'TRUE', 'FALSE', '', '', 2);
