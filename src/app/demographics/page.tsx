@@ -36,6 +36,7 @@ function DemographicsForm() {
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
 
     const handleKnowledgeChange = (topic: string, value: string) => {
         setFormData((prev) => ({
@@ -71,13 +72,12 @@ function DemographicsForm() {
                 throw new Error(data.error || "Failed to submit");
             }
 
-            alert("Thank you! Your information has been saved.");
-            // Navigate to next step or home
-            // Navigate to Part A
+            // Immediately navigate, no success alert needed
             router.push(`/part-a?participant_id=${participantId}`);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error(error);
-            alert("An error occurred. Please try again.");
+            const errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again.";
+            setError(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
@@ -336,7 +336,7 @@ function DemographicsForm() {
                     <div>
                         <h3 className="text-lg font-medium text-gray-900">Prior knowledge question</h3>
                         <p className="mt-1 text-sm text-gray-500">
-                            How much do you already know about each of the following topics? (1 = I don't know anything, 7 = I know a lot)
+                            How much do you already know about each of the following topics? (1 = I don&apos;t know anything, 7 = I know a lot)
                         </p>
 
                         <div className="mt-6 overflow-x-auto">
@@ -372,6 +372,19 @@ function DemographicsForm() {
                             </table>
                         </div>
                     </div>
+
+                    {error && (
+                        <div className="rounded-md bg-red-50 p-4">
+                            <div className="flex">
+                                <div className="ml-3">
+                                    <h3 className="text-sm font-medium text-red-800">Error</h3>
+                                    <div className="mt-2 text-sm text-red-700">
+                                        <p>{error}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex justify-end pt-6">
                         <button

@@ -8,7 +8,7 @@ export async function GET() {
             "SELECT id, content, group_id FROM sentences ORDER BY group_id, id"
         );
         return NextResponse.json(rows);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Database error:", error);
         return NextResponse.json({ error: "Failed to fetch sentences" }, { status: 500 });
     }

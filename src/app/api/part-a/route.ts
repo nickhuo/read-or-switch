@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         } finally {
             connection.release();
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Database error:", error);
         return NextResponse.json({ error: "Failed to save response" }, { status: 500 });
     }

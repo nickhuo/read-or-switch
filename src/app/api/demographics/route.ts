@@ -29,14 +29,17 @@ export async function POST(request: Request) {
     try {
         await connection.beginTransaction();
 
-        // 1. Insert Participant
+        // 1. Insert Participant (Ignore if exists)
         await connection.execute(
             "INSERT IGNORE INTO participants (participant_id) VALUES (?)",
             [participantId]
         );
 
-        // 2. Insert Demographics
+        // 2. Insert or Update Demographics
         const dob = `${dobYear}-${dobMonth}-${dobDay}`;
+        // Delete existing demographics if any to simplify update (or use UPDATE)
+        await connection.execute("DELETE FROM demographics WHERE participant_id = ?", [participantId]);
+
         await connection.execute(
             `INSERT INTO demographics (
         participant_id, dob, gender, education_level, 
@@ -58,9 +61,12 @@ export async function POST(request: Request) {
         );
 
         // 3. Insert Knowledge Ratings
-        // First get topic IDs
+        // First delete existing knowledge to avoid duplicates
+        await connection.execute("DELETE FROM participant_knowledge WHERE participant_id = ?", [participantId]);
+
+        // Get topic IDs
         const [topics] = await connection.query<RowDataPacket[]>("SELECT id, name FROM topics");
-        const topicMap = new Map(topics.map((t: any) => [t.name, t.id]));
+        const topicMap = new Map(topics.map((t: RowDataPacket) => [t.name, t.id]));
 
         for (const [topicName, rating] of Object.entries(knowledge)) {
             const topicId = topicMap.get(topicName);
@@ -74,10 +80,11 @@ export async function POST(request: Request) {
 
         await connection.commit();
         return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
         await connection.rollback();
         console.error("Database error details:", error);
-        return NextResponse.json({ error: error.message || "Database error" }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : "Database error";
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     } finally {
         connection.release();
     }

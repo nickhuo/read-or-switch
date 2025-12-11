@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Phase = "instructions" | "practice" | "formal" | "finished";
 type View = "story-selection" | "reading" | "decision" | "summary" | "comprehension";
@@ -28,7 +28,6 @@ export default function PartBPage() {
 }
 
 function PartBContent() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const participantId = searchParams.get("participant_id");
 
@@ -51,6 +50,12 @@ function PartBContent() {
     const [q3, setQ3] = useState(50);
     const [q4, setQ4] = useState(50);
 
+    const startFormal = useCallback(() => {
+        setPhase("formal");
+        setTimeLeft(900); // 15 minutes
+        setView("story-selection");
+    }, []);
+
     // Timer Logic
     useEffect(() => {
         if (phase === "instructions" || phase === "finished") return;
@@ -59,7 +64,12 @@ function PartBContent() {
         if (view !== "reading") return;
 
         if (timeLeft <= 0) {
-            handlePhaseTimeout();
+            if (phase === "practice") {
+                alert("Practice phase complete. Moving to Formal Task.");
+                startFormal();
+            } else if (phase === "formal") {
+                setPhase("finished");
+            }
             return;
         }
 
@@ -68,47 +78,31 @@ function PartBContent() {
         }, 1000);
 
         return () => clearInterval(timerId);
-    }, [phase, timeLeft, view]);
+    }, [phase, timeLeft, view, startFormal]);
 
     // Fetch Stories when phase changes
     useEffect(() => {
         if (phase === "practice" || phase === "formal") {
+            const fetchStories = async (currentPhase: string) => {
+                try {
+                    const res = await fetch(`/api/part-b/stories?phase=${currentPhase}`);
+                    if (!res.ok) throw new Error("Failed to fetch stories");
+                    const data = await res.json();
+                    setStories(data);
+                } catch (error) {
+                    console.error(error);
+                    alert("Failed to load stories.");
+                }
+            };
             fetchStories(phase);
             setVisitedStories(new Set()); // Reset visited stories on phase change
         }
     }, [phase]);
 
-    const fetchStories = async (currentPhase: string) => {
-        try {
-            const res = await fetch(`/api/part-b/stories?phase=${currentPhase}`);
-            if (!res.ok) throw new Error("Failed to fetch stories");
-            const data = await res.json();
-            setStories(data);
-        } catch (error) {
-            console.error(error);
-            alert("Failed to load stories.");
-        }
-    };
-
     const startPractice = () => {
         setPhase("practice");
         setTimeLeft(240); // 4 minutes
         setView("story-selection");
-    };
-
-    const startFormal = () => {
-        setPhase("formal");
-        setTimeLeft(900); // 15 minutes
-        setView("story-selection");
-    };
-
-    const handlePhaseTimeout = () => {
-        if (phase === "practice") {
-            alert("Practice phase complete. Moving to Formal Task.");
-            startFormal();
-        } else if (phase === "formal") {
-            setPhase("finished");
-        }
     };
 
     const handleSelectStory = async (story: Story) => {
@@ -369,7 +363,7 @@ function PartBContent() {
                             </label>
                             <input type="range" min="0" max="100" value={q3} onChange={(e) => setQ3(Number(e.target.value))} className="w-full" />
                             <div className="flex justify-between text-sm text-gray-500 mt-1">
-                                <span>Didn't Learn Anything at All</span>
+                                <span>Didn&apos;t Learn Anything at All</span>
                                 <span>Learned a Lot</span>
                             </div>
                         </div>
@@ -381,7 +375,7 @@ function PartBContent() {
                             </label>
                             <input type="range" min="0" max="100" value={q4} onChange={(e) => setQ4(Number(e.target.value))} className="w-full" />
                             <div className="flex justify-between text-sm text-gray-500 mt-1">
-                                <span>Didn't Learn Anything at All</span>
+                                <span>Didn&apos;t Learn Anything at All</span>
                                 <span>Learned a Lot</span>
                             </div>
                         </div>
