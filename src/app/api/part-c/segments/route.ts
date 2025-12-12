@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
     try {
         const segments = await query(
-            "SELECT * FROM part2_segments WHERE story_id = ? ORDER BY segment_order ASC",
+            "SELECT * FROM story_segments WHERE story_id = ? ORDER BY segment_order ASC",
             [storyId]
         );
         return NextResponse.json(segments);

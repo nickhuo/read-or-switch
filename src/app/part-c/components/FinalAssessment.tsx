@@ -71,7 +71,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
 
     const handleSubmit = async () => {
         try {
-            await fetch("/api/part-b/final", {
+            await fetch("/api/part-c/final", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ participantId, responses: responseData })

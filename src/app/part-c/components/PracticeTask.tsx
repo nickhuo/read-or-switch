@@ -25,7 +25,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     useEffect(() => {
         // Fetch practice stories
-        fetch("/api/part-b/stories?phase=practice")
+        fetch("/api/part-c/stories?phase=practice")
             .then(res => res.json())
             .then(data => setStories(data))
             .catch(err => console.error("Failed to fetch stories", err));
@@ -38,7 +38,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
     const handleSelectStory = async (story: Story) => {
         setCurrentStory(story);
         try {
-            const res = await fetch(`/api/part-b/segments?storyId=${story.id}`);
+            const res = await fetch(`/api/part-c/segments?storyId=${story.id}`);
             const data = await res.json();
             setSegments(data);
             setCurrentSegmentIndex(0);

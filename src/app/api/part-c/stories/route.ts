@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
     try {
         const stories = await query(
-            "SELECT * FROM part2_stories WHERE phase = ?",
+            "SELECT * FROM stories WHERE phase = ?",
             [phase]
         );
         return NextResponse.json(stories);

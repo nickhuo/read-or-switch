@@ -255,5 +255,114 @@ INSERT IGNORE INTO vocabulary_questions (word, option_1, option_2, option_3, opt
 INSERT IGNORE INTO comprehension_questions (story_id, question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
 (1, 'A medical supplier is interested in understanding the market size of bone graft material. What kind of population may be in the market?', 'an athlete with severe fractures', 'a retiree with significant bone loss', 'a patient suffering from cancer', 'all of the above', 4),
 (1, 'A tissue banks is responsible for screening the medical histories of the donors and freeze the donated bones (T/F)', 'TRUE', 'FALSE', '', '', 1),
-(1, 'What could be a risk that is associated with surgical procedure of bone graft?', 'osteoporosis', 'infection', 'muscle atrophy', 'nerve damage', 2),
-(1, 'Due to ethical concerns, all bone graft materials can only come from donors who have died (T/F)', 'TRUE', 'FALSE', '', '', 2);
+(1, 'What could be a risk that is associated with surgical procedure of bone graft?', 'osteoporosis', 'infection', 'muscle atrophy', 'nerve damage', 2);
+
+-- ==========================================
+-- Part 2: Story Reading & Comprehension
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS part2_stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    phase ENUM('practice', 'formal') NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS part2_segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    content TEXT NOT NULL,
+    segment_order INT NOT NULL,
+    FOREIGN KEY (story_id) REFERENCES part2_stories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS part2_actions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    story_id INT NOT NULL,
+    segment_id INT,
+    action_type ENUM('continue', 'switch', 'start_story') NOT NULL,
+    reading_time_ms INT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (story_id) REFERENCES part2_stories(id),
+    FOREIGN KEY (segment_id) REFERENCES part2_segments(id)
+);
+
+CREATE TABLE IF NOT EXISTS part2_summaries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    phase ENUM('practice', 'formal') NOT NULL,
+    content TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+);
+
+CREATE TABLE IF NOT EXISTS part2_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    sentence_text TEXT NOT NULL, -- The sentence with the missing word
+    missing_word VARCHAR(255) NOT NULL,
+    option_1 VARCHAR(255) NOT NULL,
+    option_2 VARCHAR(255) NOT NULL,
+    option_3 VARCHAR(255) NOT NULL,
+    option_4 VARCHAR(255) NOT NULL,
+    correct_option INT NOT NULL COMMENT '1-4',
+    FOREIGN KEY (story_id) REFERENCES part2_stories(id)
+);
+
+CREATE TABLE IF NOT EXISTS part2_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT NOT NULL COMMENT '1-4',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES part2_questions(id)
+);
+
+-- Seed Part 2 Stories (Mock)
+INSERT IGNORE INTO part2_stories (title, phase) VALUES 
+('The Hidden Treasure', 'practice'),
+('Office Surprise', 'practice'),
+('Runaway Cat', 'practice'),
+('Global Warming', 'formal'),
+('Quantum Computing', 'formal'),
+('Deep Sea Exploration', 'formal'),
+('Mars Colonization', 'formal');
+
+-- Seed Part 2 Segments (Mock - Simplified)
+-- For Practice (3 stories)
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'This is a practice segment. It is about 50 words long to match the requirement.', 1 FROM part2_stories WHERE phase = 'practice';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'This is the second segment of the practice story. Reading is fun and important.', 2 FROM part2_stories WHERE phase = 'practice';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Segment three continues the narrative. The plot thickens as we read more.', 3 FROM part2_stories WHERE phase = 'practice';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Segment four brings a twist. Unexpected events happen in the story.', 4 FROM part2_stories WHERE phase = 'practice';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Segment five resolves some conflicts. The characters are learning.', 5 FROM part2_stories WHERE phase = 'practice';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Segment six concludes the practice story. Good job reading!', 6 FROM part2_stories WHERE phase = 'practice';
+
+-- For Formal (4 stories)
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'This is a formal segment. It should be longer, around 220 words. (Mock content)', 1 FROM part2_stories WHERE phase = 'formal';
+-- (Adding just one segment per story for brevity in development, usually we need 6)
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Formal segment 2. Detailed information about the topic.', 2 FROM part2_stories WHERE phase = 'formal';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Formal segment 3. More details.', 3 FROM part2_stories WHERE phase = 'formal';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Formal segment 4. Analysis of the topic.', 4 FROM part2_stories WHERE phase = 'formal';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Formal segment 5. Discussion.', 5 FROM part2_stories WHERE phase = 'formal';
+INSERT INTO part2_segments (story_id, content, segment_order)
+SELECT id, 'Formal segment 6. Conclusion.', 6 FROM part2_stories WHERE phase = 'formal';
+
+-- Seed Part 2 Questions (Mock)
+INSERT INTO part2_questions (story_id, sentence_text, missing_word, option_1, option_2, option_3, option_4, correct_option)
+SELECT id, 'The scientist discovered a new ___ in the ocean.', 'species', 'car', 'species', 'building', 'planet', 2 FROM part2_stories WHERE title = 'Deep Sea Exploration'; 
+

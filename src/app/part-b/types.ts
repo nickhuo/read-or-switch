@@ -7,7 +7,20 @@ export interface Story {
 
 export interface Segment {
     id: number;
+    story_id: number;
     content: string;
     segment_order: number;
-    is_predictable: boolean;
+}
+
+export interface Question {
+    id: number;
+    story_id: number;
+    story_title: string;
+    sentence_text: string;
+    missing_word: string;
+    option_1: string;
+    option_2: string;
+    option_3: string;
+    option_4: string;
+    correct_option: number;
 }

@@ -84,7 +84,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     const handleLetterSubmit = async () => {
         try {
-            await fetch("/api/part-b/cognitive/letter", {
+            await fetch("/api/part-c/cognitive/letter", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ participantId, responses: letterData })
@@ -131,7 +131,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     const handleVocabSubmit = async () => {
         try {
-            await fetch("/api/part-b/cognitive/vocab", {
+            await fetch("/api/part-c/cognitive/vocab", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ participantId, responses: vocabData })

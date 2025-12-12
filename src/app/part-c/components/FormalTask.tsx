@@ -31,7 +31,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     useEffect(() => {
         // Fetch formal stories (5 subtopics, 11 articles each is the requirement, 
         // but for now we fetch whatever 'formal' stories are in DB and group them or just list them)
-        fetch("/api/part-b/stories?phase=formal")
+        fetch("/api/part-c/stories?phase=formal")
             .then(res => res.json())
             .then(data => setStories(data))
             .catch(err => console.error("Failed to fetch stories", err));
@@ -69,7 +69,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     const handleSelectStory = async (story: Story) => {
         setCurrentStory(story);
         try {
-            const res = await fetch(`/api/part-b/segments?storyId=${story.id}`);
+            const res = await fetch(`/api/part-c/segments?storyId=${story.id}`);
             const data = await res.json();
             setSegments(data);
             setCurrentSegmentIndex(0);
