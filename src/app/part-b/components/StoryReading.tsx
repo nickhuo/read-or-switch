@@ -130,10 +130,10 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
     if (view === "selection") {
         const allVisited = stories.length > 0 && stories.every(s => visitedStoryIds.has(s.id));
         return (
-            <div className="max-w-4xl mx-auto mt-10 p-4">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold capitalize">{phase} Phase: Choose a Story</h2>
-                    <div className="text-xl font-mono bg-blue-100 px-3 py-1 rounded text-blue-800">
+            <div className="max-w-6xl mx-auto mt-12 px-6">
+                <div className="flex justify-between items-center mb-10 pb-4 border-b border-[var(--border)]">
+                    <h2 className="text-2xl font-semibold capitalize text-[var(--foreground)]">{phase} Phase: Choose a Story</h2>
+                    <div className="text-lg font-mono font-medium text-[var(--foreground)] bg-[var(--surface)] px-3 py-1.5 rounded-md border border-[var(--border)]">
                         {formatTime(timeLeft)}
                     </div>
                 </div>
@@ -143,16 +143,16 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
                         <button
                             key={story.id}
                             onClick={() => handleSelectStory(story)}
-                            className={`p-6 rounded shadow border text-left hover:shadow-lg transition-all ${visitedStoryIds.has(story.id)
-                                    ? "bg-gray-100 border-gray-300"
-                                    : "bg-white border-blue-200"
+                            className={`p-6 rounded-xl border text-left transition-all duration-200 min-h-[120px] flex flex-col justify-between ${visitedStoryIds.has(story.id)
+                                ? "bg-[var(--input-bg)] border-transparent text-[var(--muted)]"
+                                : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)] hover:shadow-sm"
                                 }`}
                         >
-                            <h3 className={`text-lg font-semibold ${visitedStoryIds.has(story.id) ? "text-gray-600" : "text-blue-800"}`}>
+                            <h3 className={`text-lg font-medium ${visitedStoryIds.has(story.id) ? "opacity-60" : ""}`}>
                                 {story.title}
                             </h3>
                             {visitedStoryIds.has(story.id) && (
-                                <span className="text-xs text-green-700 font-bold block mt-1">Read</span>
+                                <span className="text-xs text-green-600 font-medium uppercase tracking-wide bg-green-50 px-2 py-1 rounded-full self-start">Read</span>
                             )}
                         </button>
                     ))}
@@ -160,10 +160,13 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
 
                 {allVisited && (
                     <div className="mt-12 text-center">
-                        <p className="mb-4 text-green-700 font-medium">You have read all stories.</p>
+                        <div className="mb-6 p-4 bg-[var(--surface)] text-[var(--muted)] rounded-lg inline-block border border-[var(--border)]">
+                            You have read all stories.
+                        </div>
+                        <br />
                         <button
                             onClick={onComplete}
-                            className="bg-green-600 text-white px-8 py-3 rounded font-bold hover:bg-green-700 shadow"
+                            className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring shadow-sm"
                         >
                             Finish Reading Phase
                         </button>
@@ -175,34 +178,34 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
 
     if (view === "reading" && currentStory) {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-10 rounded shadow-md mt-10 relative border-t-4 border-blue-500">
-                <div className="absolute top-4 right-4 font-mono font-bold text-gray-400">
+            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 relative border border-[var(--border)]">
+                <div className="absolute top-6 right-8 font-mono font-medium text-[var(--muted)] text-sm bg-[var(--input-bg)] px-2 py-1 rounded">
                     {formatTime(timeLeft)}
                 </div>
 
-                <h3 className="text-xl font-bold mb-6 text-gray-800 text-center">{currentStory.title}</h3>
+                <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest mb-6 text-center">{currentStory.title}</h3>
 
-                <div className="p-6 bg-gray-50 rounded mb-8 text-xl leading-relaxed text-gray-800 font-serif">
+                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] min-h-[200px] font-sans">
                     {segments[currentSegmentIndex]?.content}
                 </div>
 
-                <div className="flex justify-between gap-8 mt-4">
+                <div className="flex justify-between gap-6 mt-4">
                     <button
                         onClick={handleSwitch}
-                        className="flex-1 bg-white border-2 border-red-100 text-red-600 px-6 py-3 rounded hover:bg-red-50 font-bold transition-colors"
+                        className="flex-1 px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
                     >
                         Switch Story
                     </button>
                     <button
                         onClick={handleContinue}
-                        className="flex-1 bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 font-bold shadow-md transition-transform active:scale-95"
+                        className="flex-1 bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium text-sm shadow-sm focus-ring"
                     >
                         Continue
                     </button>
                 </div>
 
-                <div className="text-center mt-4 text-gray-400 text-sm">
-                    Segment {currentSegmentIndex + 1} of {segments.length}
+                <div className="text-center mt-6 text-[var(--muted)] text-xs uppercase tracking-widest opacity-60">
+                    Segment {currentSegmentIndex + 1} / {segments.length}
                 </div>
             </div>
         );

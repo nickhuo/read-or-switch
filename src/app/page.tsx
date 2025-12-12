@@ -13,52 +13,50 @@ export default function Home() {
     if (consented && participantId) {
       router.push(`/demographics?participant_id=${participantId}`);
     }
-
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-lg glass-panel rounded-2xl p-10 shadow-sm transition-all duration-300">
+        <div className="text-center space-y-3 mb-10">
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
             Informed Consent
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="text-[var(--muted)] text-base">
             Please review the terms and provide your consent to participate.
           </p>
         </div>
 
-        <div className="rounded-md bg-blue-50 p-4">
-          <p className="text-sm text-blue-700">
-            <strong>Study Terms:</strong> Participant agrees to the study terms.
-            (This is a placeholder for the full consent text).
+        <div className="rounded-xl bg-[var(--input-bg)] p-6 mb-8 border border-[var(--border)]">
+          <p className="text-sm leading-relaxed text-[var(--foreground)]">
+            <strong className="block mb-2 font-medium">Study Terms</strong>
+            Participant agrees to the study terms. (This is a placeholder for the full consent text).
+            Your participation is voluntary and you may withdraw at any time.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="space-y-2">
             <label
               htmlFor="participantId"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-[var(--foreground)]"
             >
               Participant ID
             </label>
-            <div className="mt-1">
-              <input
-                id="participantId"
-                name="participantId"
-                type="number"
-                required
-                value={participantId}
-                onChange={(e) => setParticipantId(e.target.value)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm text-black"
-                placeholder="Enter your ID"
-              />
-            </div>
+            <input
+              id="participantId"
+              name="participantId"
+              type="number"
+              required
+              value={participantId}
+              onChange={(e) => setParticipantId(e.target.value)}
+              className="block w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[var(--foreground)] shadow-sm focus-ring placeholder-[var(--muted)] transition-colors hover:border-[var(--foreground)]"
+              placeholder="Enter your assigned ID"
+            />
           </div>
 
-          <div className="flex items-start">
-            <div className="flex h-5 items-center">
+          <div className="flex items-start gap-4 p-4 rounded-lg border border-transparent hover:bg-[var(--input-bg)] transition-colors -mx-4 cursor-pointer" onClick={() => setConsented(!consented)}>
+            <div className="flex h-6 items-center">
               <input
                 id="consent"
                 name="consent"
@@ -66,15 +64,15 @@ export default function Home() {
                 required
                 checked={consented}
                 onChange={(e) => setConsented(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-5 w-5 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]/20 cursor-pointer"
               />
             </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="consent" className="font-medium text-gray-700">
+            <div className="text-sm">
+              <label htmlFor="consent" className="font-medium text-[var(--foreground)] cursor-pointer">
                 Yes, I consent
               </label>
-              <p className="text-gray-500">
-                I have read and understood the terms.
+              <p className="text-[var(--muted)] mt-1">
+                I have read and understood the terms of this study.
               </p>
             </div>
           </div>
@@ -82,9 +80,9 @@ export default function Home() {
           <button
             type="submit"
             disabled={!consented || !participantId}
-            className="flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="flex w-full justify-center rounded-lg bg-[var(--primary)] px-4 py-3 text-sm font-medium text-[var(--primary-fg)] shadow-sm hover:opacity-90 active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            Next
+            Start Experiment
           </button>
         </form>
       </div>

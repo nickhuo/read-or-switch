@@ -149,32 +149,43 @@ function PartAContent() {
         return () => clearInterval(timerId);
     }, [step, timeLeft, handleSummarySubmit]);
 
-    if (!participantId) return <div>Missing Participant ID</div>;
+    if (!participantId) return <div className="p-10 text-center text-red-500">Missing Participant ID</div>;
+
+    // Component Styles
+    const cardClass = "max-w-2xl w-full glass-panel p-10 rounded-2xl shadow-sm transition-all duration-300";
+    const buttonClass = "flex justify-center rounded-lg bg-[var(--primary)] px-6 py-3 text-sm font-medium text-[var(--primary-fg)] shadow-sm hover:opacity-90 active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20";
+    const primaryTitle = "text-3xl font-semibold tracking-tight text-[var(--foreground)] mb-6";
+    const bodyText = "text-[var(--muted)] text-base leading-relaxed mb-8";
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8 relative">
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 relative">
             {(step === "reading" || step === "summary") && (
-                <div className="absolute top-4 right-4 text-xl font-mono font-bold text-gray-700">
-                    Time Left: {formatTime(timeLeft)}
+                <div className="absolute top-6 right-8 text-sm font-mono font-medium text-[var(--muted)] bg-[var(--surface)]/80 px-3 py-1.5 rounded-md border border-[var(--border)] backdrop-blur-sm">
+                    Time Left: <span className="text-[var(--foreground)]">{formatTime(timeLeft)}</span>
                 </div>
             )}
+
             {step === "instructions" && (
-                <div className="max-w-2xl bg-white p-8 rounded shadow text-center">
-                    <h1 className="text-2xl font-bold mb-4">Part A: Sentence Reading</h1>
-                    <p className="mb-6 text-gray-700">
-                        In this task, you will read a series of sentences.
-                        <br /><br />
-                        You have a total of <strong>10 minutes</strong> to complete this section (reading + summary).
-                        <br /><br />
-                        Press the <strong>SPACEBAR</strong> to reveal each word one by one.
-                        <br />
-                        Read at your own natural pace.
-                        <br /><br />
-                        After the sentences, you will be asked to write a short summary.
-                    </p>
+                <div className={cardClass}>
+                    <h1 className={primaryTitle}>Part A: Sentence Reading</h1>
+                    <div className={bodyText}>
+                        <p className="mb-4">
+                            In this task, you will read a series of sentences.
+                        </p>
+                        <p className="mb-4">
+                            You have a total of <strong className="text-[var(--foreground)]">10 minutes</strong> to complete this section (reading + summary).
+                        </p>
+                        <p className="mb-4">
+                            Press the <strong className="text-[var(--foreground)] border border-[var(--border)] px-1 py-0.5 rounded bg-[var(--input-bg)] text-xs uppercase tracking-wider">Spacebar</strong> to reveal each word one by one.
+                            Read at your own natural pace.
+                        </p>
+                        <p>
+                            After the sentences, you will be asked to write a short summary.
+                        </p>
+                    </div>
                     <button
                         onClick={() => setStep("reading")}
-                        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                        className={buttonClass}
                     >
                         Start Reading
                     </button>
@@ -183,12 +194,14 @@ function PartAContent() {
 
             {step === "reading" && (
                 <div className="max-w-4xl w-full">
-                    <div className="bg-white p-12 rounded shadow-lg min-h-[300px] flex flex-col justify-center">
-                        <div className="flex flex-wrap gap-x-3 gap-y-6 text-2xl font-mono leading-loose">
+                    <div className="glass-panel p-16 rounded-2xl shadow-sm min-h-[400px] flex flex-col justify-center items-center">
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-8 text-3xl font-mono leading-loose max-w-3xl">
                             {words.map((word, index) => (
                                 <span
                                     key={index}
-                                    className={`${index === currentWordIndex ? "text-black bg-yellow-100" : "text-gray-300"
+                                    className={`transition-all duration-200 ${index === currentWordIndex
+                                            ? "text-[var(--foreground)] font-medium bg-[var(--input-bg)] px-2 -mx-2 rounded"
+                                            : "text-[var(--border)]"
                                         }`}
                                 >
                                     {index === currentWordIndex
@@ -198,26 +211,26 @@ function PartAContent() {
                             ))}
                         </div>
                     </div>
-                    <p className="mt-8 text-center text-gray-500">
-                        Sentence {currentSentenceIndex + 1} of {sentences.length}
+                    <p className="mt-8 text-center text-sm font-medium text-[var(--muted)] uppercase tracking-widest opacity-60">
+                        Sentence {currentSentenceIndex + 1} / {sentences.length}
                     </p>
                 </div>
             )}
 
             {step === "summary" && (
-                <div className="max-w-2xl w-full bg-white p-8 rounded shadow">
-                    <h2 className="text-xl font-bold mb-4">Summary</h2>
-                    <p className="mb-4 text-gray-700">Please write a brief summary of what you just read.</p>
+                <div className={cardClass}>
+                    <h2 className={primaryTitle}>Summary</h2>
+                    <p className={bodyText}>Please write a brief summary of what you just read.</p>
                     <textarea
-                        className="w-full h-32 p-3 border border-gray-300 rounded focus:border-blue-500 focus:outline-none text-black"
+                        className="w-full h-40 p-4 border border-[var(--border)] rounded-lg bg-[var(--input-bg)] focus-ring resize-none text-[var(--foreground)] placeholder-[var(--muted)] mb-6"
                         value={summary}
                         onChange={(e) => setSummary(e.target.value)}
                         placeholder="Type your summary here..."
                     />
-                    <div className="mt-6 flex justify-end">
+                    <div className="flex justify-end">
                         <button
                             onClick={handleSummarySubmit}
-                            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                            className={buttonClass}
                         >
                             Submit Summary
                         </button>
@@ -226,15 +239,22 @@ function PartAContent() {
             )}
 
             {step === "finished" && (
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold">Part A Complete</h2>
-                    <p className="mt-4 mb-8">Thank you. Please proceed to the next part.</p>
-                    <button
-                        onClick={() => router.push(`/part-b?participant_id=${participantId}`)}
-                        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-                    >
-                        Go to Part B
-                    </button>
+                <div className="text-center space-y-6">
+                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2 className="text-3xl font-semibold text-[var(--foreground)]">Part A Complete</h2>
+                    <p className="text-[var(--muted)] max-w-md mx-auto">Thank you for completing this section. You are now ready to proceed to the next part of the study.</p>
+                    <div className="pt-4">
+                        <button
+                            onClick={() => router.push(`/part-b?participant_id=${participantId}`)}
+                            className={buttonClass + " w-full sm:w-auto mx-auto"}
+                        >
+                            Go to Part B
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

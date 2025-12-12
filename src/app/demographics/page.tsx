@@ -87,20 +87,27 @@ function DemographicsForm() {
         return <div className="p-8 text-center text-red-500">Error: No Participant ID provided.</div>;
     }
 
-    return (
-        <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl bg-white p-8 shadow rounded-lg">
-                <h1 className="mb-8 text-2xl font-bold text-gray-900">Demographic Information</h1>
+    // Shared input class (matching global design system)
+    const inputClass = "block w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] shadow-sm focus-ring placeholder-[var(--muted)] transition-colors hover:border-[var(--foreground)]";
+    const labelClass = "block text-sm font-medium text-[var(--foreground)] mb-2";
+    const radioClass = "h-4 w-4 border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]/20 cursor-pointer";
+    const sectionClass = "p-6 rounded-xl border border-[var(--border)] bg-[var(--surface)]/50";
 
-                <form onSubmit={handleSubmit} className="space-y-8">
+    return (
+        <div className="min-h-screen p-6 sm:p-12">
+            <div className="mx-auto max-w-3xl glass-panel rounded-2xl shadow-sm p-8 sm:p-10">
+                <h1 className="mb-2 text-3xl font-semibold text-[var(--foreground)]">Demographic Information</h1>
+                <p className="mb-10 text-[var(--muted)]">Please answer the following questions about yourself.</p>
+
+                <form onSubmit={handleSubmit} className="space-y-10">
                     {/* Date of Birth */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Date of Birth:</label>
-                        <div className="mt-2 flex gap-4">
+                    <div className={sectionClass}>
+                        <label className={labelClass}>Date of Birth</label>
+                        <div className="flex gap-4">
                             <input
                                 type="number"
                                 placeholder="MM"
-                                className="w-20 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
+                                className={`${inputClass} w-24`}
                                 value={formData.dobMonth}
                                 onChange={(e) => setFormData({ ...formData, dobMonth: e.target.value })}
                                 required
@@ -108,7 +115,7 @@ function DemographicsForm() {
                             <input
                                 type="number"
                                 placeholder="DD"
-                                className="w-20 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
+                                className={`${inputClass} w-24`}
                                 value={formData.dobDay}
                                 onChange={(e) => setFormData({ ...formData, dobDay: e.target.value })}
                                 required
@@ -116,7 +123,7 @@ function DemographicsForm() {
                             <input
                                 type="number"
                                 placeholder="YYYY"
-                                className="w-24 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
+                                className={`${inputClass} w-32`}
                                 value={formData.dobYear}
                                 onChange={(e) => setFormData({ ...formData, dobYear: e.target.value })}
                                 required
@@ -125,32 +132,32 @@ function DemographicsForm() {
                     </div>
 
                     {/* Gender */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Gender:</label>
-                        <div className="mt-2 space-x-6">
+                    <div className={sectionClass}>
+                        <label className={labelClass}>Gender</label>
+                        <div className="flex gap-6">
                             {["Male", "Female"].map((g) => (
-                                <label key={g} className="inline-flex items-center">
+                                <label key={g} className="inline-flex items-center cursor-pointer">
                                     <input
                                         type="radio"
                                         name="gender"
                                         value={g}
                                         checked={formData.gender === g}
                                         onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className={radioClass}
                                         required
                                     />
-                                    <span className="ml-2 text-gray-700">{g}</span>
+                                    <span className="ml-2 text-[var(--foreground)]">{g}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
 
                     {/* Education */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                    <div className={sectionClass}>
+                        <label className={labelClass}>
                             Using the scale below, how many years of formal education did you complete?
                         </label>
-                        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-4">
                             {[
                                 { val: "1", label: "Fewer than 8 years (1)" },
                                 { val: "2", label: "Completed 8th grade (2)" },
@@ -161,118 +168,119 @@ function DemographicsForm() {
                                 { val: "7", label: "Master's degree (7)" },
                                 { val: "8", label: "Doctoral or medical degree (8)" },
                             ].map((opt) => (
-                                <label key={opt.val} className="flex items-center">
+                                <label key={opt.val} className="flex items-center hover:bg-[var(--input-bg)] -mx-2 px-2 py-1 rounded-md transition-colors cursor-pointer">
                                     <input
                                         type="radio"
                                         name="education"
                                         value={opt.val}
                                         checked={formData.education === opt.val}
                                         onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className={radioClass}
                                         required
                                     />
-                                    <span className="ml-2 text-sm text-gray-700">{opt.label}</span>
+                                    <span className="ml-2 text-sm text-[var(--foreground)]">{opt.label}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
 
                     {/* Native Speaker */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Are you a native speaker of English?</label>
-                        <div className="mt-2 space-x-6">
+                    <div className={sectionClass}>
+                        <label className={labelClass}>Are you a native speaker of English?</label>
+                        <div className="flex gap-6 mt-3">
                             {["Yes", "No"].map((opt) => (
-                                <label key={opt} className="inline-flex items-center">
+                                <label key={opt} className="inline-flex items-center cursor-pointer">
                                     <input
                                         type="radio"
                                         name="nativeSpeaker"
                                         value={opt}
                                         checked={formData.nativeSpeaker === opt}
                                         onChange={(e) => setFormData({ ...formData, nativeSpeaker: e.target.value })}
-                                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className={radioClass}
                                         required
                                     />
-                                    <span className="ml-2 text-gray-700">{opt}</span>
+                                    <span className="ml-2 text-[var(--foreground)]">{opt}</span>
                                 </label>
                             ))}
                         </div>
+
+                        {/* First Language (Conditional) */}
+                        {formData.nativeSpeaker === "No" && (
+                            <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                                <label className={labelClass}>If not, what is your first language?</label>
+                                <div className="mt-2 space-y-3">
+                                    <select
+                                        className={inputClass}
+                                        value={[
+                                            "Chinese", "Spanish", "Hindi", "Arabic", "Portuguese",
+                                            "Bengali", "Russian", "Japanese", "German", "French", "Korean", "Italian"
+                                        ].includes(formData.firstLanguage) ? formData.firstLanguage : (formData.firstLanguage ? "Other" : "")}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === "Other") {
+                                                setFormData({ ...formData, firstLanguage: "" });
+                                            } else {
+                                                setFormData({ ...formData, firstLanguage: val });
+                                            }
+                                        }}
+                                        required={formData.nativeSpeaker === "No" && !formData.firstLanguage}
+                                    >
+                                        <option value="" disabled>Select a language</option>
+                                        <option value="Chinese">Chinese</option>
+                                        <option value="Spanish">Spanish</option>
+                                        <option value="English">English</option>
+                                        <option value="Hindi">Hindi</option>
+                                        <option value="Arabic">Arabic</option>
+                                        <option value="Portuguese">Portuguese</option>
+                                        <option value="Bengali">Bengali</option>
+                                        <option value="Russian">Russian</option>
+                                        <option value="Japanese">Japanese</option>
+                                        <option value="German">German</option>
+                                        <option value="French">French</option>
+                                        <option value="Korean">Korean</option>
+                                        <option value="Italian">Italian</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+
+                                    {(![
+                                        "Chinese", "Spanish", "English", "Hindi", "Arabic", "Portuguese",
+                                        "Bengali", "Russian", "Japanese", "German", "French", "Korean", "Italian"
+                                    ].includes(formData.firstLanguage) && formData.firstLanguage !== undefined) && (
+                                            <input
+                                                type="text"
+                                                placeholder="Please specify"
+                                                className={inputClass}
+                                                value={formData.firstLanguage}
+                                                onChange={(e) => setFormData({ ...formData, firstLanguage: e.target.value })}
+                                                required
+                                            />
+                                        )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* First Language (Conditional) */}
-                    {formData.nativeSpeaker === "No" && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">If not, what is your first language?</label>
-                            <div className="mt-2 space-y-2">
-                                <select
-                                    className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
-                                    value={[
-                                        "Chinese", "Spanish", "Hindi", "Arabic", "Portuguese",
-                                        "Bengali", "Russian", "Japanese", "German", "French", "Korean", "Italian"
-                                    ].includes(formData.firstLanguage) ? formData.firstLanguage : (formData.firstLanguage ? "Other" : "")}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === "Other") {
-                                            setFormData({ ...formData, firstLanguage: "" });
-                                        } else {
-                                            setFormData({ ...formData, firstLanguage: val });
-                                        }
-                                    }}
-                                    required={formData.nativeSpeaker === "No" && !formData.firstLanguage}
-                                >
-                                    <option value="" disabled>Select a language</option>
-                                    <option value="Chinese">Chinese</option>
-                                    <option value="Spanish">Spanish</option>
-                                    <option value="English">English</option>
-                                    <option value="Hindi">Hindi</option>
-                                    <option value="Arabic">Arabic</option>
-                                    <option value="Portuguese">Portuguese</option>
-                                    <option value="Bengali">Bengali</option>
-                                    <option value="Russian">Russian</option>
-                                    <option value="Japanese">Japanese</option>
-                                    <option value="German">German</option>
-                                    <option value="French">French</option>
-                                    <option value="Korean">Korean</option>
-                                    <option value="Italian">Italian</option>
-                                    <option value="Other">Other</option>
-                                </select>
-
-                                {(![
-                                    "Chinese", "Spanish", "English", "Hindi", "Arabic", "Portuguese",
-                                    "Bengali", "Russian", "Japanese", "German", "French", "Korean", "Italian"
-                                ].includes(formData.firstLanguage) && formData.firstLanguage !== undefined) && (
-                                        <input
-                                            type="text"
-                                            placeholder="Please specify"
-                                            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-black"
-                                            value={formData.firstLanguage}
-                                            onChange={(e) => setFormData({ ...formData, firstLanguage: e.target.value })}
-                                            required
-                                        />
-                                    )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Proficiency */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            How would you rate your overall proficiency in English? (1 = Not proficient at all, 7 = Native-level proficiency)
+                    <div className={sectionClass}>
+                        <label className={labelClass}>
+                            How would you rate your overall proficiency in English? (1 = Not proficient, 7 = Native-level)
                         </label>
-                        <div className="mt-4 space-y-4">
+                        <div className="mt-6 space-y-6">
                             {["Reading", "Writing"].map((skill) => (
-                                <div key={skill} className="flex items-center justify-between border-b pb-2">
-                                    <span className="w-24 text-sm font-medium text-gray-700">{skill}</span>
-                                    <div className="flex flex-1 justify-between px-4">
+                                <div key={skill} className="flex items-center justify-between border-b border-[var(--border)] pb-4 last:border-0 last:pb-0">
+                                    <span className="w-24 text-sm font-medium text-[var(--foreground)]">{skill}</span>
+                                    <div className="flex flex-1 justify-between px-4 max-w-sm">
                                         {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                                            <label key={num} className="flex flex-col items-center">
-                                                <span className="mb-1 text-xs text-gray-500">{num}</span>
+                                            <label key={num} className="flex flex-col items-center cursor-pointer group">
+                                                <span className="mb-2 text-xs text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors">{num}</span>
                                                 <input
                                                     type="radio"
                                                     name={`proficiency_${skill}`}
                                                     value={num}
                                                     checked={formData[skill === "Reading" ? "proficiencyReading" : "proficiencyWriting"] === String(num)}
                                                     onChange={(e) => setFormData({ ...formData, [skill === "Reading" ? "proficiencyReading" : "proficiencyWriting"]: e.target.value })}
-                                                    className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    className={radioClass}
                                                     required
                                                 />
                                             </label>
@@ -284,31 +292,31 @@ function DemographicsForm() {
                     </div>
 
                     {/* Ethnicity */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Are you Hispanic or Latino?</label>
-                        <div className="mt-2 space-x-6">
+                    <div className={sectionClass}>
+                        <label className={labelClass}>Are you Hispanic or Latino?</label>
+                        <div className="flex gap-6 mt-3">
                             {["Yes", "No"].map((opt) => (
-                                <label key={opt} className="inline-flex items-center">
+                                <label key={opt} className="inline-flex items-center cursor-pointer">
                                     <input
                                         type="radio"
                                         name="isHispanic"
                                         value={opt}
                                         checked={formData.isHispanic === opt}
                                         onChange={(e) => setFormData({ ...formData, isHispanic: e.target.value })}
-                                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className={radioClass}
                                         required
                                     />
-                                    <span className="ml-2 text-gray-700">{opt}</span>
+                                    <span className="ml-2 text-[var(--foreground)]">{opt}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
+                    <div className={sectionClass}>
+                        <label className={labelClass}>
                             Please check one of the following ethnic or racial categories that best describe you.
                         </label>
-                        <div className="mt-2 space-y-2">
+                        <div className="mt-4 space-y-3">
                             {[
                                 "Native American/Alaska Native",
                                 "Asian",
@@ -316,43 +324,43 @@ function DemographicsForm() {
                                 "Black or African American",
                                 "White or Caucasian",
                             ].map((race) => (
-                                <label key={race} className="flex items-center">
+                                <label key={race} className="flex items-center hover:bg-[var(--input-bg)] -mx-2 px-2 py-1 rounded-md transition-colors cursor-pointer">
                                     <input
                                         type="radio"
                                         name="race"
                                         value={race}
                                         checked={formData.race === race}
                                         onChange={(e) => setFormData({ ...formData, race: e.target.value })}
-                                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className={radioClass}
                                         required
                                     />
-                                    <span className="ml-2 text-sm text-gray-700">{race}</span>
+                                    <span className="ml-2 text-sm text-[var(--foreground)]">{race}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
 
                     {/* Prior Knowledge */}
-                    <div>
-                        <h3 className="text-lg font-medium text-gray-900">Prior knowledge question</h3>
-                        <p className="mt-1 text-sm text-gray-500">
-                            How much do you already know about each of the following topics? (1 = I don&apos;t know anything, 7 = I know a lot)
+                    <div className={sectionClass}>
+                        <h3 className="text-lg font-medium text-[var(--foreground)]">Prior knowledge question</h3>
+                        <p className="mt-1 text-sm text-[var(--muted)]">
+                            How much do you already know about each of the following topics? (1 = Just a little, 7 = A lot)
                         </p>
 
                         <div className="mt-6 overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
+                            <table className="min-w-full">
                                 <thead>
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Topic</th>
+                                        <th className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider">Topic</th>
                                         {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-                                            <th key={n} className="px-2 py-2 text-center text-sm font-medium text-gray-700">{n}</th>
+                                            <th key={n} className="px-2 py-2 text-center text-xs font-medium text-[var(--muted)]">{n}</th>
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-200 bg-white">
+                                <tbody className="divide-y divide-[var(--border)]">
                                     {Object.keys(formData.knowledge).map((topic) => (
-                                        <tr key={topic}>
-                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{topic}</td>
+                                        <tr key={topic} className="hover:bg-[var(--input-bg)] transition-colors">
+                                            <td className="px-4 py-3 text-sm font-medium text-[var(--foreground)]">{topic}</td>
                                             {[1, 2, 3, 4, 5, 6, 7].map((n) => (
                                                 <td key={n} className="px-2 py-3 text-center">
                                                     <input
@@ -361,7 +369,7 @@ function DemographicsForm() {
                                                         value={n}
                                                         checked={formData.knowledge[topic] === String(n)}
                                                         onChange={(e) => handleKnowledgeChange(topic, e.target.value)}
-                                                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                        className={radioClass}
                                                         required
                                                     />
                                                 </td>
@@ -374,11 +382,11 @@ function DemographicsForm() {
                     </div>
 
                     {error && (
-                        <div className="rounded-md bg-red-50 p-4">
+                        <div className="rounded-lg bg-red-50 p-4 border border-red-100">
                             <div className="flex">
                                 <div className="ml-3">
                                     <h3 className="text-sm font-medium text-red-800">Error</h3>
-                                    <div className="mt-2 text-sm text-red-700">
+                                    <div className="mt-1 text-sm text-red-700">
                                         <p>{error}</p>
                                     </div>
                                 </div>
@@ -390,7 +398,7 @@ function DemographicsForm() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="rounded-md border border-transparent bg-blue-600 px-8 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400"
+                            className="rounded-lg bg-[var(--primary)] px-8 py-3 text-base font-medium text-[var(--primary-fg)] shadow-sm hover:opacity-90 active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? "Submitting..." : "Submit"}
                         </button>

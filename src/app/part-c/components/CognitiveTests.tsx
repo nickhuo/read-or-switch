@@ -145,17 +145,20 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     if (subPhase === "intro") {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow text-center mt-20">
-                <h2 className="text-2xl font-bold mb-4">Part 3: Cognitive Tests</h2>
-                <p className="mb-6">
-                    You will now complete two short cognitive tests.
-                    <br />
-                    1. Letter Comparison
-                    <br />
-                    2. Vocabulary Test
-                </p>
-                <button onClick={handleIntroNext} className="bg-blue-600 text-white px-6 py-2 rounded">
-                    Start
+            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 text-center">
+                <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)]">Part 3: Cognitive Tests</h2>
+                <div className="mb-8 text-[var(--muted)] text-base leading-relaxed">
+                    <p className="mb-4">You will now complete two short cognitive tests.</p>
+                    <ul className="space-y-2">
+                        <li>1. Letter Comparison</li>
+                        <li>2. Vocabulary Test</li>
+                    </ul>
+                </div>
+                <button
+                    onClick={handleIntroNext}
+                    className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring"
+                >
+                    Start Tests
                 </button>
             </div>
         );
@@ -163,51 +166,51 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     if (subPhase === "letter") {
         return (
-            <div className="max-w-4xl mx-auto bg-white p-12 rounded-xl shadow-sm border border-gray-100 mt-10">
+            <div className="max-w-5xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 border border-[var(--border)]">
                 <div className="text-center mb-10">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Letter Comparison Round 1</h2>
-                    <p className="text-gray-500 font-medium">Please do as fast as you can.</p>
+                    <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-2">Letter Comparison Round 1</h2>
+                    <p className="text-[var(--muted)] font-medium">Please compare the strings as fast as you can.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                     {letterProblems.map((prob, idx) => (
-                        <div key={prob.id} className="flex items-center justify-between border-2 border-gray-200 rounded-lg p-4 bg-white hover:border-blue-100 transition-colors">
+                        <div key={prob.id} className="flex items-center justify-between border border-[var(--border)] rounded-lg p-5 bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
                             <div className="flex items-center gap-4 flex-1">
-                                <span className="font-bold text-blue-500 text-lg w-6">{idx + 1}</span>
-                                <span className="font-mono text-lg font-bold tracking-widest text-gray-800">{prob.s1}</span>
+                                <span className="font-mono text-[var(--muted)] text-sm w-6">{idx + 1}.</span>
+                                <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.s1}</span>
                             </div>
 
-                            <div className="flex gap-2 mx-2">
+                            <div className="flex gap-3 mx-4">
                                 <button
                                     onClick={() => handleLetterResponse(prob.id, "S")}
-                                    className={`w-10 h-10 rounded border-2 font-bold transition-all ${letterResponses[prob.id] === "S"
-                                        ? "bg-blue-600 text-white border-blue-600"
-                                        : "bg-white text-gray-400 border-gray-300 hover:border-gray-400"
+                                    className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[prob.id] === "S"
+                                        ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
+                                        : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
                                         }`}
                                 >S</button>
                                 <button
                                     onClick={() => handleLetterResponse(prob.id, "D")}
-                                    className={`w-10 h-10 rounded border-2 font-bold transition-all ${letterResponses[prob.id] === "D"
-                                        ? "bg-blue-600 text-white border-blue-600"
-                                        : "bg-white text-gray-400 border-gray-300 hover:border-gray-400"
+                                    className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[prob.id] === "D"
+                                        ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
+                                        : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
                                         }`}
                                 >D</button>
                             </div>
 
                             <div className="flex-1 text-right">
-                                <span className="font-mono text-lg font-bold tracking-widest text-gray-800">{prob.s2}</span>
+                                <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.s2}</span>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="text-center mt-10">
+                <div className="text-center mt-12">
                     <button
                         onClick={handleLetterSubmit}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xl font-bold px-10 py-3 rounded shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mx-auto"
+                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring flex items-center justify-center gap-2 mx-auto"
                     >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         Done
                     </button>
@@ -218,27 +221,27 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     if (subPhase === "vocab") {
         return (
-            <div className="max-w-5xl mx-auto bg-white p-8 rounded shadow mt-10">
-                <div className="mb-8 border-l-4 border-blue-600 pl-4">
-                    <h2 className="text-2xl font-bold mb-2">Vocabulary Task</h2>
+            <div className="max-w-6xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+                <div className="mb-8 border-l-4 border-[var(--foreground)] pl-4">
+                    <h2 className="text-2xl font-semibold mb-2 text-[var(--foreground)]">Vocabulary Task</h2>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {vocabQuestions.map((q) => (
-                        <div key={q.id} className="border p-4 rounded shadow-sm">
-                            <h3 className="font-bold text-lg mb-4">{q.id}. {q.word}</h3>
-                            <div className="space-y-3">
+                        <div key={q.id} className="border border-[var(--border)] p-5 rounded-lg bg-[var(--surface)]">
+                            <h3 className="font-medium text-lg mb-4 border-b border-[var(--border)] pb-2">{q.id}. <span className="font-bold">{q.word}</span></h3>
+                            <div className="space-y-2">
                                 {q.options.map((opt, idx) => (
-                                    <label key={idx} className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 border border-transparent hover:border-gray-200">
+                                    <label key={idx} className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-[var(--input-bg)] border border-transparent hover:border-[var(--border)] transition-colors">
                                         <input
                                             type="radio"
                                             name={`vocab-${q.id}`}
                                             value={opt}
                                             checked={vocabResponses[q.id] === opt}
                                             onChange={() => handleVocabResponse(q.id, opt)}
-                                            className="w-5 h-5"
+                                            className="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]"
                                         />
-                                        <span className="text-gray-700">{opt}</span>
+                                        <span className="text-sm text-[var(--foreground)]/80">{opt}</span>
                                     </label>
                                 ))}
                             </div>
@@ -247,7 +250,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                 </div>
 
                 <div className="text-center mt-12">
-                    <button onClick={handleVocabSubmit} className="bg-blue-600 text-white px-8 py-3 rounded font-bold hover:bg-blue-700">
+                    <button onClick={handleVocabSubmit} className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring shadow-sm">
                         Finish Vocabulary Test
                     </button>
                 </div>

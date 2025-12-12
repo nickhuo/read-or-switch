@@ -124,14 +124,16 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
 
     if (view === "instructions") {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow text-center mt-20">
-                <h2 className="text-2xl font-bold mb-4">Part 2: Formal Task</h2>
-                <p className="mb-6">
-                    You have 15 minutes to read.
-                    <br />
-                    You must visit all available topics.
-                </p>
-                <button onClick={handleStart} className="bg-blue-600 text-white px-6 py-2 rounded">
+            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 text-center">
+                <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)]">Part 2: Formal Task</h2>
+                <div className="mb-8 text-[var(--muted)] text-base leading-relaxed">
+                    <p className="mb-2">You have <strong className="text-[var(--foreground)]">15 minutes</strong> to read.</p>
+                    <p>You must visit all available topics.</p>
+                </div>
+                <button
+                    onClick={handleStart}
+                    className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring"
+                >
                     Start Formal Task
                 </button>
             </div>
@@ -141,10 +143,12 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     if (view === "story-selection") {
         const allVisited = stories.length > 0 && stories.every(s => visitedStoryIds.has(s.id));
         return (
-            <div className="max-w-4xl mx-auto mt-10">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold">Formal Topics</h2>
-                    <div className="text-xl font-mono">{formatTime(timeLeft)}</div>
+            <div className="max-w-6xl mx-auto mt-12 px-6">
+                <div className="flex justify-between items-center mb-10 pb-4 border-b border-[var(--border)]">
+                    <h2 className="text-2xl font-semibold text-[var(--foreground)]">Formal Topics</h2>
+                    <div className="text-lg font-mono font-medium text-[var(--foreground)] bg-[var(--surface)] px-3 py-1.5 rounded-md border border-[var(--border)]">
+                        {formatTime(timeLeft)}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -153,21 +157,24 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                             key={story.id}
                             onClick={() => !visitedStoryIds.has(story.id) && handleSelectStory(story)}
                             disabled={visitedStoryIds.has(story.id)}
-                            className={`p-6 rounded shadow border text-left ${visitedStoryIds.has(story.id)
-                                ? "bg-gray-200 border-gray-300 cursor-not-allowed text-gray-500"
-                                : "bg-white border-blue-200 hover:shadow-lg"
+                            className={`p-6 rounded-xl border text-left transition-all duration-200 min-h-[120px] flex flex-col justify-between ${visitedStoryIds.has(story.id)
+                                ? "bg-[var(--input-bg)] border-transparent text-[var(--muted)] cursor-not-allowed"
+                                : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)] hover:shadow-sm"
                                 }`}
                         >
-                            <h3 className={`text-lg font-semibold ${visitedStoryIds.has(story.id) ? "text-gray-600" : "text-blue-800"}`}>{story.title}</h3>
-                            {visitedStoryIds.has(story.id) && <span className="text-xs text-green-700 font-bold block mt-1">Visited</span>}
+                            <h3 className={`text-lg font-medium ${visitedStoryIds.has(story.id) ? "opacity-60" : ""}`}>{story.title}</h3>
+                            {visitedStoryIds.has(story.id) && <span className="text-xs text-green-600 font-medium uppercase tracking-wide bg-green-50 px-2 py-1 rounded-full self-start">Visited</span>}
                         </button>
                     ))}
                 </div>
 
                 {allVisited && (
-                    <div className="mt-8 text-center">
-                        <button onClick={onComplete} className="bg-green-600 text-white px-8 py-3 rounded font-bold shadow">
-                            Completing Part 2
+                    <div className="mt-12 text-center">
+                        <button
+                            onClick={onComplete}
+                            className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
+                        >
+                            Complete Formal Task
                         </button>
                     </div>
                 )}
@@ -177,22 +184,28 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
 
     if (view === "reading" && currentStory) {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow mt-10 relative">
-                <div className="absolute top-4 right-4 font-mono font-bold text-gray-500">
+            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 relative">
+                <div className="absolute top-6 right-8 font-mono font-medium text-[var(--muted)] text-sm bg-[var(--input-bg)] px-2 py-1 rounded">
                     {formatTime(timeLeft)}
                 </div>
-                <h3 className="text-lg font-bold mb-2 text-gray-400">{currentStory.title}</h3>
-                <div className="p-4 bg-gray-50 rounded mb-6 text-lg">
+                <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest mb-6">{currentStory.title}</h3>
+
+                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] min-h-[200px]">
                     {segments[currentSegmentIndex]?.content}
                 </div>
 
-                <div className="flex justify-between gap-8 mt-8">
-                    {/* "Positioned far apart" */}
-                    <button onClick={handleSwitch} className="bg-red-50 text-red-600 px-6 py-3 rounded hover:bg-red-100 font-semibold">
-                        Go to other topic
+                <div className="flex justify-between gap-6">
+                    <button
+                        onClick={handleSwitch}
+                        className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
+                    >
+                        Switch Topic
                     </button>
-                    <button onClick={handleContinue} className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 font-semibold">
-                        Continue to next article
+                    <button
+                        onClick={handleContinue}
+                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium text-sm shadow-sm focus-ring"
+                    >
+                        Next Segment
                     </button>
                 </div>
             </div>
@@ -201,32 +214,35 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
 
     if (view === "interstitial-questions") {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow mt-10">
-                <h2 className="text-xl font-bold mb-6">Questions</h2>
-                <div className="space-y-6">
+            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+                <h2 className="text-xl font-semibold mb-8 text-[var(--foreground)]">Quick Check</h2>
+
+                <div className="space-y-8">
+                    {/* Questions */}
                     <div>
-                        <label className="block font-medium mb-2">1. Short Comprehension (Summary)</label>
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">1. Short Comprehension (Summary)</label>
                         <textarea
-                            className="w-full border p-2 rounded"
+                            className="w-full border border-[var(--border)] bg-[var(--surface)] p-3 rounded-lg focus-ring text-sm"
                             rows={3}
+                            placeholder="Briefly summarize what you just read..."
                             value={comprehensionQ}
                             onChange={(e) => setComprehensionQ(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="block font-medium mb-2">2. How much did you learn? ({learningQ})</label>
-                        <input type="range" min="0" max="100" value={learningQ} onChange={(e) => setLearningQ(Number(e.target.value))} className="w-full" />
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">2. How much did you learn? ({learningQ})</label>
+                        <input type="range" min="0" max="100" value={learningQ} onChange={(e) => setLearningQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
                     </div>
                     <div>
-                        <label className="block font-medium mb-2">3. How difficult was this? ({difficultyQ})</label>
-                        <input type="range" min="0" max="100" value={difficultyQ} onChange={(e) => setDifficultyQ(Number(e.target.value))} className="w-full" />
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">3. How difficult was this? ({difficultyQ})</label>
+                        <input type="range" min="0" max="100" value={difficultyQ} onChange={(e) => setDifficultyQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
                     </div>
                     <div>
-                        <label className="block font-medium mb-2">4. How interesting was this? ({interestQ})</label>
-                        <input type="range" min="0" max="100" value={interestQ} onChange={(e) => setInterestQ(Number(e.target.value))} className="w-full" />
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">4. How interesting was this? ({interestQ})</label>
+                        <input type="range" min="0" max="100" value={interestQ} onChange={(e) => setInterestQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
                     </div>
 
-                    <button onClick={handleSubmitQuestions} className="w-full bg-blue-600 text-white py-2 rounded font-bold mt-4">
+                    <button onClick={handleSubmitQuestions} className="w-full bg-[var(--primary)] text-[var(--primary-fg)] py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring">
                         Submit & Continue
                     </button>
                 </div>

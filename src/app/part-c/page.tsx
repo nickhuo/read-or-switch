@@ -40,19 +40,24 @@ function PartCOrchestrator() {
         }
     };
 
+    const getNavClass = (isActive: boolean) =>
+        `text-sm font-medium transition-colors ${isActive ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`;
+
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            <header className="bg-white shadow-sm p-4 mb-4">
-                <div className="max-w-7xl mx-auto flex justify-between items-center text-sm text-gray-500">
-                    <div>Participant: {participantId}</div>
-                    <div className="flex gap-4">
-                        <span className={phase === "practice" ? "font-bold text-blue-600" : ""}>1. Practice</span>
-                        <span className="text-gray-300">/</span>
-                        <span className={phase === "formal" ? "font-bold text-blue-600" : ""}>2. Formal</span>
-                        <span className="text-gray-300">/</span>
-                        <span className={phase === "cognitive" ? "font-bold text-blue-600" : ""}>3. Cognitive</span>
-                        <span className="text-gray-300">/</span>
-                        <span className={phase === "final" ? "font-bold text-blue-600" : ""}>4. Final</span>
+        <div className="min-h-screen bg-[var(--background)] pb-20">
+            <header className="sticky top-0 z-10 glass-panel border-b border-[var(--border)] px-6 py-4 mb-8 backdrop-blur-md">
+                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                    <div className="text-sm font-mono text-[var(--muted)] bg-[var(--surface)] px-2 py-1 rounded border border-[var(--border)]">
+                        ID: <span className="text-[var(--foreground)]">{participantId}</span>
+                    </div>
+                    <div className="flex gap-4 items-center">
+                        <span className={getNavClass(phase === "practice")}>Practice</span>
+                        <span className="text-[var(--border)]">/</span>
+                        <span className={getNavClass(phase === "formal")}>Formal</span>
+                        <span className="text-[var(--border)]">/</span>
+                        <span className={getNavClass(phase === "cognitive")}>Cognitive</span>
+                        <span className="text-[var(--border)]">/</span>
+                        <span className={getNavClass(phase === "final")}>Final</span>
                     </div>
                 </div>
             </header>

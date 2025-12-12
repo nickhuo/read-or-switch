@@ -60,26 +60,36 @@ function PartBOrchestrator() {
         }
     };
 
+    const getViewLabel = (v: Phase) => v.replace("_", " ").toUpperCase();
+
+    // Component Styles
+    const cardClass = "max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 text-center";
+    const buttonClass = "flex justify-center rounded-lg bg-[var(--primary)] px-6 py-3 text-sm font-medium text-[var(--primary-fg)] shadow-sm hover:opacity-90 active:scale-[0.99] transition-all focus:outline-none focus-ring mx-auto";
+    const primaryTitle = "text-3xl font-semibold tracking-tight text-[var(--foreground)] mb-6";
+    const bodyText = "text-[var(--muted)] text-base leading-relaxed mb-8";
+
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
-            <header className="bg-white shadow-sm p-4 mb-4">
-                <div className="max-w-7xl mx-auto flex justify-between items-center text-sm text-gray-500">
-                    <div>Participant: {participantId}</div>
-                    <div className="font-mono">{view.replace("_", " ").toUpperCase()}</div>
+        <div className="min-h-screen bg-[var(--background)] pb-20">
+            <header className="sticky top-0 z-10 glass-panel border-b border-[var(--border)] px-6 py-4 mb-8 backdrop-blur-md">
+                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                    <div className="text-sm font-mono text-[var(--muted)] bg-[var(--surface)] px-2 py-1 rounded border border-[var(--border)]">
+                        ID: <span className="text-[var(--foreground)]">{participantId}</span>
+                    </div>
+                    <div className="text-sm font-medium text-[var(--foreground)] tracking-wide">
+                        {getViewLabel(view)}
+                    </div>
                 </div>
             </header>
-            <main>
+            <main className="px-6">
                 {view === "instructions" && (
-                    <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow text-center mt-20">
-                        <h2 className="text-2xl font-bold mb-4">Part 2: Story Reading Task</h2>
-                        <p className="mb-6">
-                            You will read several stories.
-                            <br />
-                            Some are for practice, followed by a main task.
-                            <br />
-                            After reading, you will answer some questions.
-                        </p>
-                        <button onClick={handleNext} className="bg-blue-600 text-white px-6 py-2 rounded">
+                    <div className={cardClass}>
+                        <h2 className={primaryTitle}>Part 2: Story Reading Task</h2>
+                        <div className={bodyText}>
+                            <p className="mb-4">You will read several stories.</p>
+                            <p className="mb-4">Some are for practice, followed by a main task.</p>
+                            <p>After reading, you will answer some questions.</p>
+                        </div>
+                        <button onClick={handleNext} className={buttonClass}>
                             Start Practice
                         </button>
                     </div>
@@ -111,14 +121,13 @@ function PartBOrchestrator() {
                 )}
 
                 {view === "formal_intro" && (
-                    <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow text-center mt-20">
-                        <h2 className="text-2xl font-bold mb-4">Main Task</h2>
-                        <p className="mb-6">
-                            You will now begin the formal reading task.
-                            <br />
-                            You have 15 minutes.
-                        </p>
-                        <button onClick={handleNext} className="bg-blue-600 text-white px-6 py-2 rounded">
+                    <div className={cardClass}>
+                        <h2 className={primaryTitle}>Main Task</h2>
+                        <div className={bodyText}>
+                            <p className="mb-4">You will now begin the formal reading task.</p>
+                            <p>You have <strong className="text-[var(--foreground)]">15 minutes</strong>.</p>
+                        </div>
+                        <button onClick={handleNext} className={buttonClass}>
                             Start Main Task
                         </button>
                     </div>

@@ -85,14 +85,17 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     if (view === "instructions") {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow text-center mt-20">
-                <h2 className="text-2xl font-bold mb-4">Part 1: Practice Task</h2>
-                <p className="mb-6">
+            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 text-center">
+                <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)]">Part 1: Practice Task</h2>
+                <p className="mb-8 text-[var(--muted)] text-base leading-relaxed">
                     You practice reading articles. You have about 4 minutes.
                     <br />
                     Read at your own pace. You can continue or switch articles.
                 </p>
-                <button onClick={handleStart} className="bg-blue-600 text-white px-6 py-2 rounded">
+                <button
+                    onClick={handleStart}
+                    className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring"
+                >
                     Start Practice
                 </button>
             </div>
@@ -102,30 +105,30 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
     if (view === "story-selection") {
         const allVisited = stories.length > 0 && stories.every(s => visitedStoryIds.has(s.id));
         return (
-            <div className="max-w-4xl mx-auto mt-10">
-                <h2 className="text-xl font-bold mb-4 text-center">Practice Topics</h2>
+            <div className="max-w-5xl mx-auto mt-12 px-6">
+                <h2 className="text-2xl font-semibold mb-8 text-center text-[var(--foreground)]">Practice Topics</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {stories.map(story => (
                         <button
                             key={story.id}
                             onClick={() => !visitedStoryIds.has(story.id) && handleSelectStory(story)}
                             disabled={visitedStoryIds.has(story.id)}
-                            className={`p-6 rounded shadow hover:shadow-lg border ${visitedStoryIds.has(story.id)
-                                ? "bg-gray-200 border-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-white border-gray-200 text-blue-600"
+                            className={`p-8 rounded-xl border text-left transition-all duration-200 ${visitedStoryIds.has(story.id)
+                                ? "bg-[var(--input-bg)] border-transparent text-[var(--muted)] cursor-not-allowed"
+                                : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)] hover:shadow-sm"
                                 }`}
                         >
-                            <h3 className="text-lg font-semibold">{story.title}</h3>
-                            {visitedStoryIds.has(story.id) && <div className="text-sm mt-2 font-normal">Visited</div>}
+                            <h3 className="text-lg font-medium">{story.title}</h3>
+                            {visitedStoryIds.has(story.id) && <div className="text-xs mt-3 font-medium text-[var(--muted)] uppercase tracking-wide">Visited</div>}
                         </button>
                     ))}
                 </div>
 
                 {allVisited && (
-                    <div className="mt-8 text-center">
+                    <div className="mt-12 text-center">
                         <button
                             onClick={onComplete}
-                            className="bg-green-600 text-white px-8 py-3 rounded font-bold hover:bg-green-700"
+                            className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
                         >
                             Finish Practice Task
                         </button>
@@ -137,27 +140,27 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     if (view === "reading" && currentStory) {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow mt-10">
-                <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-bold text-gray-400">{currentStory.title}</h3>
+            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest">{currentStory.title}</h3>
                 </div>
 
-                <div className="p-4 bg-gray-50 rounded mb-6 text-lg">
+                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] min-h-[200px]">
                     {segments[currentSegmentIndex]?.content}
                 </div>
 
-                <div className="flex justify-between gap-8 mt-8">
+                <div className="flex justify-between gap-6">
                     <button
                         onClick={handleSwitch}
-                        className="bg-red-50 text-red-600 px-6 py-3 rounded hover:bg-red-100 font-semibold"
+                        className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
                     >
-                        Go to other topic
+                        Switch Topic
                     </button>
                     <button
                         onClick={handleContinue}
-                        className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 font-semibold"
+                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium text-sm shadow-sm focus-ring"
                     >
-                        Continue to next article
+                        Next Segment
                     </button>
                 </div>
             </div>
@@ -166,34 +169,35 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     if (view === "interstitial-questions") {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow mt-10">
-                <h2 className="text-xl font-bold mb-6">Questions</h2>
+            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+                <h2 className="text-xl font-semibold mb-8 text-[var(--foreground)]">Quick Check</h2>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {/* 4 Questions as required */}
                     <div>
-                        <label className="block font-medium mb-2">1. Short Comprehension (Summary)</label>
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">1. Short Comprehension (Summary)</label>
                         <textarea
-                            className="w-full border p-2 rounded"
+                            className="w-full border border-[var(--border)] bg-[var(--surface)] p-3 rounded-lg focus-ring text-sm"
                             rows={3}
+                            placeholder="Briefly summarize what you just read..."
                             value={comprehensionQ}
                             onChange={(e) => setComprehensionQ(e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="block font-medium mb-2">2. How much did you learn? ({learningQ})</label>
-                        <input type="range" min="0" max="100" value={learningQ} onChange={(e) => setLearningQ(Number(e.target.value))} className="w-full" />
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">2. How much did you learn? ({learningQ})</label>
+                        <input type="range" min="0" max="100" value={learningQ} onChange={(e) => setLearningQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
                     </div>
                     <div>
-                        <label className="block font-medium mb-2">3. How difficult was this? ({difficultyQ})</label>
-                        <input type="range" min="0" max="100" value={difficultyQ} onChange={(e) => setDifficultyQ(Number(e.target.value))} className="w-full" />
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">3. How difficult was this? ({difficultyQ})</label>
+                        <input type="range" min="0" max="100" value={difficultyQ} onChange={(e) => setDifficultyQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
                     </div>
                     <div>
-                        <label className="block font-medium mb-2">4. How interesting was this? ({interestQ})</label>
-                        <input type="range" min="0" max="100" value={interestQ} onChange={(e) => setInterestQ(Number(e.target.value))} className="w-full" />
+                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">4. How interesting was this? ({interestQ})</label>
+                        <input type="range" min="0" max="100" value={interestQ} onChange={(e) => setInterestQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
                     </div>
 
-                    <button onClick={handleSubmitQuestions} className="w-full bg-blue-600 text-white py-2 rounded font-bold mt-4">
+                    <button onClick={handleSubmitQuestions} className="w-full bg-[var(--primary)] text-[var(--primary-fg)] py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring">
                         Submit & Continue
                     </button>
                 </div>

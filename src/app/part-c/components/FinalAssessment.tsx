@@ -100,35 +100,35 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
 
     if (isDone) {
         return (
-            <div className="max-w-2xl mx-auto bg-white p-8 rounded shadow text-center mt-20">
-                <h2 className="text-3xl font-bold mb-6 text-green-600">All Done!</h2>
-                <div className="text-xl mb-8">
-                    {/* Dynamic accuracy calculation could be added here */}
-                    Your Accuracy: <span className="font-bold text-blue-600">{accuracy}%</span>
+            <div className="max-w-xl mx-auto glass-panel p-12 rounded-xl shadow-sm mt-12 text-center">
+                <h2 className="text-3xl font-semibold mb-6 text-[var(--foreground)]">All Done!</h2>
+                <div className="text-xl mb-8 flex flex-col items-center gap-2">
+                    <span className="text-[var(--muted)] text-base">Your Accuracy</span>
+                    <span className="text-4xl font-bold text-[var(--primary)]">{accuracy}%</span>
                 </div>
-                <p className="text-gray-600 mb-8">Thank you for participating in this study.</p>
+                <p className="text-[var(--muted)] mb-8">Thank you for participating in this study.</p>
             </div>
         );
     }
 
     return (
-        <div className="max-w-4xl mx-auto bg-white p-8 rounded shadow mt-10">
-            <h2 className="text-3xl font-bold mb-4 text-gray-800">Comprehension Questions</h2>
-            <p className="mb-8 text-gray-600">
+        <div className="max-w-5xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+            <h2 className="text-3xl font-semibold mb-4 text-[var(--foreground)]">Comprehension Questions</h2>
+            <p className="mb-8 text-[var(--muted)] text-lg">
                 This is the final task! The multiple-choice questions here are based on the passages you read in the formal task.
             </p>
 
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {finalQuestions.map((q) => (
-                    <div key={q.id} className="border p-6 rounded shadow-sm bg-white">
-                        <div className="border-l-4 border-blue-500 pl-3 mb-4">
-                            <h3 className="font-bold text-gray-800">Question {q.id}</h3>
+                    <div key={q.id} className="border border-[var(--border)] p-6 rounded-lg bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
+                        <div className="border-l-4 border-[var(--foreground)] pl-3 mb-4">
+                            <h3 className="font-semibold text-[var(--foreground)]">Question {q.id}</h3>
                         </div>
-                        <p className="mb-4 text-gray-700 font-medium min-h-[60px]">{q.text}</p>
+                        <p className="mb-6 text-[var(--foreground)] font-medium leading-relaxed min-h-[60px]">{q.text}</p>
 
                         <div className="space-y-3">
                             {q.options.map((opt, idx) => (
-                                <label key={idx} className={`block border p-3 rounded cursor-pointer transition-colors ${responses[q.id] === opt ? "bg-blue-50 border-blue-500" : "hover:bg-gray-50 border-gray-200"}`}>
+                                <label key={idx} className={`block border p-3 rounded-lg cursor-pointer transition-colors ${responses[q.id] === opt ? "bg-[var(--input-bg)] border-[var(--primary)]/50 ring-1 ring-[var(--primary)]/20" : "hover:bg-[var(--input-bg)] border-[var(--border)]"}`}>
                                     <div className="flex items-center gap-3">
                                         <input
                                             type="radio"
@@ -136,9 +136,9 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
                                             value={opt}
                                             checked={responses[q.id] === opt}
                                             onChange={() => handleResponse(q.id, opt)}
-                                            className="w-4 h-4 text-blue-600"
+                                            className="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]"
                                         />
-                                        <span className="text-sm font-medium">{opt}</span>
+                                        <span className="text-sm font-medium text-[var(--foreground)]/90">{opt}</span>
                                     </div>
                                 </label>
                             ))}
@@ -150,7 +150,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
             <div className="text-center mt-12 mb-8">
                 <button
                     onClick={handleSubmit}
-                    className="bg-blue-600 text-white px-10 py-3 rounded text-lg font-bold hover:bg-blue-700 shadow-md"
+                    className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-3 rounded-lg text-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring"
                 >
                     Submit Answers
                 </button>
