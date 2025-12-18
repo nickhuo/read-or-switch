@@ -79,14 +79,6 @@ INSERT IGNORE INTO topics (name) VALUES
 ('Colorectal cancer'),
 ('Alzheimer''s disease');
 
--- Seed Sentences (Mock Data)
-INSERT INTO sentences (content, group_id) VALUES 
-('The quick brown fox jumps over the lazy dog.', 1),
-('She sells seashells by the seashore.', 1),
-('Peter Piper picked a peck of pickled peppers.', 1),
-('How much wood would a woodchuck chuck.', 1),
-('A watched pot never boils.', 1);
-
 -- Part B: Narrative Text Foraging Tables
 
 CREATE TABLE IF NOT EXISTS stories (
@@ -380,3 +372,36 @@ SELECT id, 'Formal segment 6. Conclusion.', 6 FROM part2_stories WHERE phase = '
 INSERT INTO part2_questions (story_id, sentence_text, missing_word, option_1, option_2, option_3, option_4, correct_option)
 SELECT id, 'The scientist discovered a new ___ in the ocean.', 'species', 'car', 'species', 'building', 'planet', 2 FROM part2_stories WHERE title = 'Deep Sea Exploration'; 
 
+
+-- ==========================================
+-- Part A: Comprehensive Questions
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS part_a_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question_text TEXT NOT NULL,
+    option_1 TEXT NOT NULL,
+    option_2 TEXT NOT NULL,
+    option_3 TEXT NOT NULL,
+    option_4 TEXT NOT NULL,
+    correct_option INT NOT NULL COMMENT '1-4'
+);
+
+CREATE TABLE IF NOT EXISTS part_a_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT NOT NULL COMMENT '1-4',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES part_a_questions(id)
+);
+
+-- Seed Part A Questions (Mock)
+INSERT IGNORE INTO part_a_questions (question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
+('What was the main theme of the sentences about the fox?', 'Laziness', 'Speed', 'Agility', 'Colors', 3),
+('Which object was mentioned as being watched?', 'Clock', 'Pot', 'Television', 'Bird', 2),
+('Who picked the pickled peppers?', 'Paul', 'Peter', 'Patrick', 'Phil', 2),
+('What did she sell by the seashore?', 'Seaweed', 'Sandcastles', 'Seashells', 'Surfboards', 3);

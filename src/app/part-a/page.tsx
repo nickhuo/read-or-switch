@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import ComprehensionQuestions from "./components/ComprehensionQuestions";
 
 // Matches API response structure
 interface Sentence {
@@ -25,7 +26,7 @@ function PartAContent() {
     const participantId = searchParams.get("participant_id");
 
     // States
-    const [step, setStep] = useState<"instructions" | "reading" | "summary" | "finished">("instructions");
+    const [step, setStep] = useState<"instructions" | "reading" | "summary" | "questions" | "finished">("instructions");
     const [readingPhase, setReadingPhase] = useState<"word-by-word" | "decision">("word-by-word");
 
     // Group sentences by set_id: { [setId]: Sentence[] }
@@ -46,7 +47,7 @@ function PartAContent() {
 
     // Fetch sentences on mount
     useEffect(() => {
-        async function fetchSentences() {
+        async function fetchSentences() { // ... no change
             try {
                 const res = await fetch("/api/sentences");
                 if (!res.ok) throw new Error("Failed to fetch");
@@ -95,24 +96,26 @@ function PartAContent() {
             return nextId;
         }
 
-        // If we exhausted linear progression (e.g. current was 16), check for incomplete sets
-        // wrapping around to the start.
-        const incompleteSets = sortedIds.filter(id => !completedSets.has(id));
-
-        if (incompleteSets.length > 0) {
-            // Return the first incomplete one (wrapping around)
-            return incompleteSets[0];
-        }
-
-        return null; // All sets completed
+        return null; // All sets completed (or reached end of list)
     }, [allSetIds, currentSetId, completedSets]);
 
     const startNextSet = useCallback(() => {
         const nextId = pickNextSet();
+
+        // Check if we are done with all sets OR if we just finished set 16 and that was the last linear one?
+        // User request: "when setid = 16 ... enter comprehensive questions"
+        // Actually, the request says "when all sets are done, i.e. setid=16".
+        // This likely means when we finish the last set.
+
         if (nextId === null) {
-            setStep("summary");
+            // All sets done
+            setStep("questions");
             return;
         }
+
+        // If we are strictly following 1->16, and maybe we skipped some?
+        // The user logic update request implies linear flow. 
+        // If pickNextSet returns valid ID, we go there.
 
         setCurrentSetId(nextId);
         setCurrentIndex(1); // Always start at 1
@@ -170,21 +173,8 @@ function PartAContent() {
         startNextSet();
     };
 
-    const handleSummarySubmit = async (summaryText: string) => {
-        try {
-            await fetch("/api/part-a", { // Existing summary route
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    participantId,
-                    groupId: 999, // global summary
-                    content: summaryText,
-                }),
-            });
-            setStep("finished");
-        } catch (err) {
-            alert("Error saving summary");
-        }
+    const handleQuestionsComplete = () => {
+        setStep("finished");
     };
 
 
@@ -297,8 +287,13 @@ function PartAContent() {
                 </div>
             )}
 
-            {step === "summary" && (
-                <SummaryView onSubmit={handleSummarySubmit} />
+            {step === "questions" && (
+                <div className="w-full">
+                    <ComprehensionQuestions
+                        participantId={participantId}
+                        onComplete={handleQuestionsComplete}
+                    />
+                </div>
             )}
 
             {step === "finished" && (
@@ -309,24 +304,6 @@ function PartAContent() {
                     </button>
                 </div>
             )}
-        </div>
-    );
-}
-
-function SummaryView({ onSubmit }: { onSubmit: (t: string) => void }) {
-    const [text, setText] = useState("");
-    return (
-        <div className="max-w-2xl w-full glass-panel p-10 rounded-2xl shadow-sm">
-            <h2 className="text-2xl font-semibold mb-4">Summary</h2>
-            <p className="text-[var(--muted)] mb-4">Please write a brief summary of what you read.</p>
-            <textarea
-                className="w-full h-40 p-4 border rounded-lg bg-[var(--input-bg)] mb-6 text-[var(--foreground)]"
-                value={text}
-                onChange={e => setText(e.target.value)}
-            />
-            <div className="flex justify-end">
-                <button onClick={() => onSubmit(text)} className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-2 rounded-lg">Submit</button>
-            </div>
         </div>
     );
 }
