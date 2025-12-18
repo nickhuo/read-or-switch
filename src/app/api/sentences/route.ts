@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { RowDataPacket } from "mysql2";
@@ -5,7 +6,7 @@ import { RowDataPacket } from "mysql2";
 export async function GET() {
     try {
         const [rows] = await pool.query<RowDataPacket[]>(
-            "SELECT id, content, group_id FROM sentences ORDER BY group_id, id"
+            "SELECT id, set_id, sentence_index, content FROM sentences ORDER BY set_id, sentence_index"
         );
         return NextResponse.json(rows);
     } catch (error: unknown) {

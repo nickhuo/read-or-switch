@@ -40,8 +40,21 @@ CREATE TABLE IF NOT EXISTS participant_knowledge (
 
 CREATE TABLE IF NOT EXISTS sentences (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    content TEXT NOT NULL,
-    group_id INT NOT NULL COMMENT 'Groups sentences into blocks of 5'
+    study_part_id INT,
+    set_id INT NOT NULL,
+    text_id VARCHAR(50),
+    sentence_index INT NOT NULL,
+    sp1_con_id VARCHAR(50),
+    predictability VARCHAR(10),
+    predict_id INT,
+    make_sense VARCHAR(10),
+    make_sense_id INT,
+    text_type VARCHAR(20),
+    text_type_id INT,
+    gen_type VARCHAR(20),
+    gen_type_id INT,
+    note TEXT,
+    content TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS participant_summaries (

@@ -4,10 +4,12 @@
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+// Matches API response structure
 interface Sentence {
     id: number;
+    set_id: number;
+    sentence_index: number;
     content: string;
-    group_id: number;
 }
 
 export default function PartAPage() {
@@ -23,20 +25,20 @@ function PartAContent() {
     const searchParams = useSearchParams();
     const participantId = searchParams.get("participant_id");
 
-    // States: 'instructions', 'reading', 'summary', 'finished'
+    // States
     const [step, setStep] = useState<"instructions" | "reading" | "summary" | "finished">("instructions");
+    // Group sentences by set_id: { [setId]: Sentence[] }
+    const [sentenceSets, setSentenceSets] = useState<Record<number, Sentence[]>>({});
+    const [allSetIds, setAllSetIds] = useState<number[]>([]);
 
-    // Data State
-    const [sentences, setSentences] = useState<Sentence[]>([]);
-    // const [loading, setLoading] = useState(true); // Unused
+    // Tracking
+    const [currentSetId, setCurrentSetId] = useState<number | null>(null);
+    const [currentIndex, setCurrentIndex] = useState<number>(1); // 1-based index from CSV
+    const [seenFirstSentences, setSeenFirstSentences] = useState<Set<number>>(new Set());
+    const [completedSets, setCompletedSets] = useState<Set<number>>(new Set());
 
-    // SPR State
-    const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-    const [currentWordIndex, setCurrentWordIndex] = useState(-1); // -1 means before start
-    const [words, setWords] = useState<string[]>([]);
-
-    // Summary State
-    const [summary, setSummary] = useState("");
+    // UI
+    const [loading, setLoading] = useState(true);
 
     // Fetch sentences on mount
     useEffect(() => {
@@ -44,219 +46,229 @@ function PartAContent() {
             try {
                 const res = await fetch("/api/sentences");
                 if (!res.ok) throw new Error("Failed to fetch");
-                const data = await res.json();
-                setSentences(data);
+                const data: Sentence[] = await res.json();
+
+                // Group by set_id
+                const sets: Record<number, Sentence[]> = {};
+                const ids = new Set<number>();
+                data.forEach(s => {
+                    if (!sets[s.set_id]) sets[s.set_id] = [];
+                    sets[s.set_id].push(s);
+                    ids.add(s.set_id);
+                });
+
+                // Sort sentences within sets just in case
+                for (const id in sets) {
+                    sets[id].sort((a, b) => a.sentence_index - b.sentence_index);
+                }
+
+                setSentenceSets(sets);
+                setAllSetIds(Array.from(ids).sort((a, b) => a - b));
             } catch (error) {
                 console.error(error);
                 alert("Failed to load sentences.");
             } finally {
-                // setLoading(false);
+                setLoading(false);
             }
         }
         fetchSentences();
     }, []);
 
-    useEffect(() => {
-        if (step === "reading" && sentences[currentSentenceIndex]) {
-            setWords(sentences[currentSentenceIndex].content.split(" "));
-            setCurrentWordIndex(0); // Start at the first word immediately
+    // Selection Logic
+    const pickNextSet = useCallback(() => {
+        // Enforce: Must verify participant sees first sentence of all 16 sets.
+        // Priority 1: Sets where first sentence hasn't been seen.
+        const unseenSets = allSetIds.filter(id => !seenFirstSentences.has(id));
+
+        if (unseenSets.length > 0) {
+            // Pick rand or sequential? Sequential is fine/simple, or random from unseen.
+            // Let's pick random from unseen to avoid predictable order if that matters, or just first available.
+            // Random from unseen is better experimental design usually.
+            const nextId = unseenSets[Math.floor(Math.random() * unseenSets.length)];
+            return nextId;
         }
-    }, [step, currentSentenceIndex, sentences]);
 
-    // Handle Spacebar for SPR
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (step !== "reading") return;
-            if (e.code === "Space") {
-                e.preventDefault();
+        // Priority 2: Sets that are seemingly incomplete?
+        // Requirement says: "Once all 16 first sentences have been shown... continue any additional set-selection logic".
+        // Use case: Maybe revisit abandoned sets? Or if all sets finished, done?
+        // Assuming if all sets are "completed" (index 6 reached), we might be done?
+        // But if user switched early, that set is "abandoned". Can they go back?
+        // Prompt says: "After each sentence (except possibly the last) ... decides".
+        // It doesn't explicitly say we MUST finish all sets, but usually we move until some condition.
+        // Let's assume we cycle through remaining incomplete sets?
+        // Let's filter for sets that are NOT in completedSets.
+        const incompleteSets = allSetIds.filter(id => !completedSets.has(id));
 
-                // Advance
-                if (currentWordIndex < words.length - 1) {
-                    setCurrentWordIndex((prev) => prev + 1);
-                } else {
-                    // End of sentence
-                    if (currentSentenceIndex < sentences.length - 1) {
-                        setCurrentSentenceIndex((prev) => prev + 1);
-                        // Reset word index for next sentence is handled by the effect above
-                        // But we need to ensure we don't get stuck if effect hasn't run yet?
-                        // Actually, the effect depends on currentSentenceIndex, so it will trigger.
-                    } else {
-                        // End of block -> Go to Summary
-                        setStep("summary");
-                    }
-                }
-            }
-        };
+        if (incompleteSets.length > 0) {
+            // Avoid current if possible, unless it's the only one
+            const candidates = incompleteSets.filter(id => id !== currentSetId);
+            if (candidates.length === 0) return incompleteSets[0]; // Only one left
 
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [step, currentWordIndex, words, currentSentenceIndex, sentences]);
+            return candidates[Math.floor(Math.random() * candidates.length)];
+        }
 
-    // Timer State
-    const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+        // If all completed?
+        return null; // Done
+    }, [allSetIds, seenFirstSentences, completedSets, currentSetId]);
 
-    // Format time as MM:SS
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-    };
+    const startNextSet = useCallback(() => {
+        const nextId = pickNextSet();
+        if (nextId === null) {
+            setStep("summary"); // Or finished? Prompt says Summary after sentences.
+            return;
+        }
 
-    const handleSummarySubmit = useCallback(async () => {
-        // Allow empty summary if time ran out
-        // if (!summary.trim()) return; // Removed to allow auto-submit on timeout
+        setCurrentSetId(nextId);
+        setCurrentIndex(1); // Always start at 1
+        setSeenFirstSentences(prev => new Set(prev).add(nextId));
+    }, [pickNextSet]);
 
+    const logAction = async (action: "continue" | "switch" | "start_set") => {
+        if (!participantId || !currentSetId) return;
         try {
-            const res = await fetch("/api/part-a", {
+            await fetch("/api/part-a/log", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     participantId,
-                    groupId: sentences[0]?.group_id || 1,
-                    content: summary,
+                    setId: currentSetId,
+                    sentenceIndex: currentIndex,
+                    action
+                })
+            });
+        } catch (e) {
+            console.error("Log error", e);
+        }
+    };
+
+    const handleContinue = async () => {
+        if (!currentSetId) return;
+
+        await logAction("continue");
+
+        // Logic:
+        // If index < 6, advance in same set.
+        // If index = 6, set completed, move to next set.
+        if (currentIndex < 6) {
+            setCurrentIndex(prev => prev + 1);
+        } else {
+            // Completed set
+            setCompletedSets(prev => new Set(prev).add(currentSetId));
+            startNextSet();
+        }
+    };
+
+    const handleSwitch = async () => {
+        if (!currentSetId) return;
+
+        await logAction("switch");
+
+        // Abandon set -> Move to valid next set
+        startNextSet();
+    };
+
+    const handleSummarySubmit = async (summaryText: string) => {
+        try {
+            await fetch("/api/part-a", { // Existing summary route
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    participantId,
+                    groupId: 999, // global summary
+                    content: summaryText,
                 }),
             });
-
-            if (!res.ok) {
-                throw new Error("Failed to save summary");
-            }
-
             setStep("finished");
-        } catch (error) {
-            console.error(error);
-            // If it fails on timeout, we still want to show finished state or alert
-            // We can't easily check timeLeft here inside useCallback without adding it to deps, 
-            // but we only call this when manually submitting or timeout.
-            // Let's just alert if it wasn't a timeout (we can't check timeLeft easily without ref or dep).
-            // Simplified: just alert.
-            alert("Failed to save summary. Please try again.");
+        } catch (err) {
+            alert("Error saving summary");
         }
-    }, [participantId, sentences, summary]);
+    };
 
-    // Timer Logic
-    useEffect(() => {
-        if (step !== "reading" && step !== "summary") return;
 
-        if (timeLeft <= 0) {
-            handleSummarySubmit();
-            return;
-        }
+    // INIT
+    const handleStart = () => {
+        setStep("reading");
+        startNextSet();
+    };
 
-        const timerId = setInterval(() => {
-            setTimeLeft((prev) => prev - 1);
-        }, 1000);
+    // RENDER HELPERS
+    const currentSentence = currentSetId && sentenceSets[currentSetId]?.find(s => s.sentence_index === currentIndex);
 
-        return () => clearInterval(timerId);
-    }, [step, timeLeft, handleSummarySubmit]);
+    if (loading) return <div>Loading experiment data...</div>;
+    if (!participantId) return <div>Missing Participant ID</div>;
 
-    if (!participantId) return <div className="p-10 text-center text-red-500">Missing Participant ID</div>;
-
-    // Component Styles
     const cardClass = "max-w-2xl w-full glass-panel p-10 rounded-2xl shadow-sm transition-all duration-300";
-    const buttonClass = "flex justify-center rounded-lg bg-[var(--primary)] px-6 py-3 text-sm font-medium text-[var(--primary-fg)] shadow-sm hover:opacity-90 active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20";
-    const primaryTitle = "text-3xl font-semibold tracking-tight text-[var(--foreground)] mb-6";
-    const bodyText = "text-[var(--muted)] text-base leading-relaxed mb-8";
+    const buttonBase = "flex justify-center rounded-lg px-6 py-3 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2";
+    const primaryBtn = `${buttonBase} bg-[var(--primary)] text-[var(--primary-fg)] hover:opacity-90 active:scale-[0.99] focus:ring-[var(--primary)]/20`;
+    const outlineBtn = `${buttonBase} border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--accent)] active:scale-[0.99] focus:ring-[var(--ring)]`;
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 relative">
-            {(step === "reading" || step === "summary") && (
-                <div className="absolute top-6 right-8 text-sm font-mono font-medium text-[var(--muted)] bg-[var(--surface)]/80 px-3 py-1.5 rounded-md border border-[var(--border)] backdrop-blur-sm">
-                    Time Left: <span className="text-[var(--foreground)]">{formatTime(timeLeft)}</span>
-                </div>
-            )}
-
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 relative bg-[var(--background)]">
             {step === "instructions" && (
                 <div className={cardClass}>
-                    <h1 className={primaryTitle}>Part A: Sentence Reading</h1>
-                    <div className={bodyText}>
-                        <p className="mb-4">
-                            In this task, you will read a series of sentences.
-                        </p>
-                        <p className="mb-4">
-                            You have a total of <strong className="text-[var(--foreground)]">10 minutes</strong> to complete this section (reading + summary).
-                        </p>
-                        <p className="mb-4">
-                            Press the <strong className="text-[var(--foreground)] border border-[var(--border)] px-1 py-0.5 rounded bg-[var(--input-bg)] text-xs uppercase tracking-wider">Spacebar</strong> to reveal each word one by one.
-                            Read at your own natural pace.
-                        </p>
-                        <p>
-                            After the sentences, you will be asked to write a short summary.
-                        </p>
+                    <h1 className="text-3xl font-semibold mb-6">Part A: Sentence Reading</h1>
+                    <div className="text-[var(--muted)] text-base leading-relaxed mb-8 space-y-4">
+                        <p>In this task, you will read sets of sentences.</p>
+                        <p>After each sentence, you can choose to <strong>Continue reading</strong> more about the topic, or <strong>Switch topic</strong> to read about something else.</p>
+                        <p>Please read carefully.</p>
                     </div>
-                    <button
-                        onClick={() => setStep("reading")}
-                        className={buttonClass}
-                    >
-                        Start Reading
-                    </button>
+                    <button onClick={handleStart} className={primaryBtn}>Start Task</button>
                 </div>
             )}
 
-            {step === "reading" && (
-                <div className="max-w-4xl w-full">
-                    <div className="glass-panel p-16 rounded-2xl shadow-sm min-h-[400px] flex flex-col justify-center items-center">
-                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-8 text-3xl font-mono leading-loose max-w-3xl">
-                            {words.map((word, index) => (
-                                <span
-                                    key={index}
-                                    className={`transition-all duration-200 ${index === currentWordIndex
-                                            ? "text-[var(--foreground)] font-medium bg-[var(--input-bg)] px-2 -mx-2 rounded"
-                                            : "text-[var(--border)]"
-                                        }`}
-                                >
-                                    {index === currentWordIndex
-                                        ? word
-                                        : "_".repeat(word.length)}
-                                </span>
-                            ))}
-                        </div>
+            {step === "reading" && currentSentence && (
+                <div className="max-w-3xl w-full flex flex-col items-center gap-12">
+                    <div className="glass-panel p-16 rounded-2xl shadow-sm w-full min-h-[300px] flex items-center justify-center">
+                        <p className="text-2xl leading-loose font-medium text-center text-[var(--foreground)]">
+                            {currentSentence.content}
+                        </p>
                     </div>
-                    <p className="mt-8 text-center text-sm font-medium text-[var(--muted)] uppercase tracking-widest opacity-60">
-                        Sentence {currentSentenceIndex + 1} / {sentences.length}
-                    </p>
+
+                    <div className="flex w-full justify-between items-center px-4">
+                        <button onClick={handleSwitch} className={outlineBtn}>
+                            Switch Topic
+                        </button>
+                        <button onClick={handleContinue} className={primaryBtn}>
+                            Continue Reading
+                        </button>
+                    </div>
+
+                    <div className="text-xs text-[var(--muted)] opacity-50">
+                        Debug: Set {currentSetId} | Index {currentIndex} | Seen: {seenFirstSentences.size}/16
+                    </div>
                 </div>
             )}
 
             {step === "summary" && (
-                <div className={cardClass}>
-                    <h2 className={primaryTitle}>Summary</h2>
-                    <p className={bodyText}>Please write a brief summary of what you just read.</p>
-                    <textarea
-                        className="w-full h-40 p-4 border border-[var(--border)] rounded-lg bg-[var(--input-bg)] focus-ring resize-none text-[var(--foreground)] placeholder-[var(--muted)] mb-6"
-                        value={summary}
-                        onChange={(e) => setSummary(e.target.value)}
-                        placeholder="Type your summary here..."
-                    />
-                    <div className="flex justify-end">
-                        <button
-                            onClick={handleSummarySubmit}
-                            className={buttonClass}
-                        >
-                            Submit Summary
-                        </button>
-                    </div>
-                </div>
+                <SummaryView onSubmit={handleSummarySubmit} />
             )}
 
             {step === "finished" && (
                 <div className="text-center space-y-6">
-                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <h2 className="text-3xl font-semibold text-[var(--foreground)]">Part A Complete</h2>
-                    <p className="text-[var(--muted)] max-w-md mx-auto">Thank you for completing this section. You are now ready to proceed to the next part of the study.</p>
-                    <div className="pt-4">
-                        <button
-                            onClick={() => router.push(`/part-b?participant_id=${participantId}`)}
-                            className={buttonClass + " w-full sm:w-auto mx-auto"}
-                        >
-                            Go to Part B
-                        </button>
-                    </div>
+                    <h2 className="text-3xl font-semibold">Part A Complete</h2>
+                    <button onClick={() => router.push(`/part-b?participant_id=${participantId}`)} className={primaryBtn}>
+                        Go to Part B
+                    </button>
                 </div>
             )}
+        </div>
+    );
+}
+
+function SummaryView({ onSubmit }: { onSubmit: (t: string) => void }) {
+    const [text, setText] = useState("");
+    return (
+        <div className="max-w-2xl w-full glass-panel p-10 rounded-2xl shadow-sm">
+            <h2 className="text-2xl font-semibold mb-4">Summary</h2>
+            <p className="text-[var(--muted)] mb-4">Please write a brief summary of what you read.</p>
+            <textarea
+                className="w-full h-40 p-4 border rounded-lg bg-[var(--input-bg)] mb-6 text-[var(--foreground)]"
+                value={text}
+                onChange={e => setText(e.target.value)}
+            />
+            <div className="flex justify-end">
+                <button onClick={() => onSubmit(text)} className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-2 rounded-lg">Submit</button>
+            </div>
         </div>
     );
 }
