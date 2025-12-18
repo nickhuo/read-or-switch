@@ -36,8 +36,6 @@ function PartAContent() {
     // Tracking
     const [currentSetId, setCurrentSetId] = useState<number | null>(null);
     const [currentIndex, setCurrentIndex] = useState<number>(1); // 1-based index from CSV
-    const [seenFirstSentences, setSeenFirstSentences] = useState<Set<number>>(new Set());
-    const [completedSets, setCompletedSets] = useState<Set<number>>(new Set());
 
     // Word-by-word tracking
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -97,7 +95,7 @@ function PartAContent() {
         }
 
         return null; // All sets completed (or reached end of list)
-    }, [allSetIds, currentSetId, completedSets]);
+    }, [allSetIds, currentSetId]);
 
     const startNextSet = useCallback(() => {
         const nextId = pickNextSet();
@@ -119,8 +117,6 @@ function PartAContent() {
 
         setCurrentSetId(nextId);
         setCurrentIndex(1); // Always start at 1
-        setSeenFirstSentences(prev => new Set(prev).add(nextId));
-
         // Reset reading state
         setReadingPhase("word-by-word");
         setCurrentWordIndex(0);
@@ -159,7 +155,6 @@ function PartAContent() {
             setCurrentWordIndex(0);
         } else {
             // Completed set
-            setCompletedSets(prev => new Set(prev).add(currentSetId));
             startNextSet();
         }
     };

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import StoryReading from "./components/StoryReading";
 import SummaryInput from "./components/SummaryInput";

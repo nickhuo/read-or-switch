@@ -9,6 +9,8 @@ interface PracticeTaskProps {
 }
 
 export default function PracticeTask({ participantId, onComplete }: PracticeTaskProps) {
+    void participantId;
+
     const [view, setView] = useState<"instructions" | "story-selection" | "reading" | "interstitial-questions">("instructions");
     const [stories, setStories] = useState<Story[]>([]);
     const [visitedStoryIds, setVisitedStoryIds] = useState<Set<number>>(new Set());

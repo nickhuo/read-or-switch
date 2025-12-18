@@ -64,8 +64,9 @@ export async function GET() {
         }
 
         return NextResponse.json({ success: true, message: "Seeded letter(10), vocab(3), comp(4)" });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Seeding failed:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

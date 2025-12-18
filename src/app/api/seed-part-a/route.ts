@@ -5,6 +5,24 @@ import fs from "fs";
 import path from "path";
 import { parse } from "csv-parse/sync";
 
+interface SentenceRecord {
+    StudyPartID: string;
+    SentSetID: string;
+    TextID: string;
+    Order: string;
+    SP1ConID: string;
+    Predictability: string;
+    PredictID: string;
+    Make_sense: string;
+    Make_sense_ID: string;
+    TextType: string;
+    TextTypeID: string;
+    GenType: string;
+    GenTypeID: string;
+    Note: string;
+    SentenceText: string;
+}
+
 export async function GET() {
     try {
         const csvPath = path.join(process.cwd(), "docs", "Study Material", "Study Part A Materials-Table 1.csv");
@@ -14,7 +32,7 @@ export async function GET() {
             columns: true,
             skip_empty_lines: true,
             trim: true,
-        });
+        }) as SentenceRecord[];
 
         const connection = await pool.getConnection();
 
@@ -54,7 +72,7 @@ export async function GET() {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
-            for (const record of records as any[]) {
+            for (const record of records) {
                 // Map CSV fields to DB columns
                 // CSV: StudyPartID,SentSetID,TextID,Order,SP1ConID,Predictability,PredictID,Make_sense,Make_sense_ID,TextType,TextTypeID,GenType,GenTypeID,Note,SentenceText
 
@@ -87,8 +105,9 @@ export async function GET() {
             connection.release();
         }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Seeding error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

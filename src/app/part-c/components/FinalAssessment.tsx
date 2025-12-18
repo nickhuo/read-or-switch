@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 
 interface FinalAssessmentProps {
     participantId: string;
     onComplete: () => void;
+}
+
+interface FinalResponseData {
+    questionId: number;
+    responseIndex: number;
+    isCorrect: boolean;
+    reactionTimeMs: number;
 }
 
 // Mock Data
@@ -42,14 +50,17 @@ const finalQuestions = [
 
 export default function FinalAssessment({ participantId, onComplete }: FinalAssessmentProps) {
     const [responses, setResponses] = useState<Record<number, string>>({});
-    const [responseData, setResponseData] = useState<any[]>([]);
-    const [startTime, setStartTime] = useState<number>(Date.now()); // Start timer on mount
+    const [responseData, setResponseData] = useState<FinalResponseData[]>([]);
+    const startTimeRef = useRef(0);
     const [isDone, setIsDone] = useState(false);
     const [accuracy, setAccuracy] = useState(0);
 
-    const handleResponse = (id: number, val: string) => {
-        const now = Date.now();
-        const reactionTime = now - startTime;
+    useEffect(() => {
+        startTimeRef.current = performance.now();
+    }, []);
+
+    const handleResponse = (event: ChangeEvent<HTMLInputElement>, id: number, val: string) => {
+        const reactionTime = startTimeRef.current ? event.timeStamp - startTimeRef.current : 0;
 
         setResponses(prev => ({ ...prev, [id]: val }));
 
@@ -135,7 +146,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
                                             name={`q-${q.id}`}
                                             value={opt}
                                             checked={responses[q.id] === opt}
-                                            onChange={() => handleResponse(q.id, opt)}
+                                            onChange={(event) => handleResponse(event, q.id, opt)}
                                             className="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]"
                                         />
                                         <span className="text-sm font-medium text-[var(--foreground)]/90">{opt}</span>

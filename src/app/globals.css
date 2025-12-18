@@ -1,18 +1,27 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   /* Linear / Notion inspired palette */
-  --background: #fbfbfb; /* Very subtle off-white for main bg */
-  --surface: #ffffff;    /* Pure white for cards */
-  --foreground: #1a1a1a; /* Soft black for primary text */
-  --muted: #8a8a8a;      /* Muted gray for secondary text */
-  --border: #e5e5e5;     /* Subtle border */
-  --input-bg: #f5f5f5;   /* Light gray for input backgrounds */
-  
+  --background: #fbfbfb;
+  /* Very subtle off-white for main bg */
+  --surface: #ffffff;
+  /* Pure white for cards */
+  --foreground: #1a1a1a;
+  /* Soft black for primary text */
+  --muted: #8a8a8a;
+  /* Muted gray for secondary text */
+  --border: #e5e5e5;
+  /* Subtle border */
+  --input-bg: #f5f5f5;
+  /* Light gray for input backgrounds */
+
   /* Accents */
-  --primary: #1a1a1a;    /* Primary action (Black) */
-  --primary-fg: #ffffff; /* Text on primary */
-  
+  --primary: #1a1a1a;
+  /* Primary action (Black) */
+  --primary-fg: #ffffff;
+  /* Text on primary */
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -26,24 +35,12 @@
   --color-input: var(--input-bg);
   --color-primary: var(--primary);
   --color-primary-fg: var(--primary-fg);
-  
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111111;
-    --surface: #1a1a1a;
-    --foreground: #ededed;
-    --muted: #888888;
-    --border: #333333;
-    --input-bg: #222222;
-    
-    --primary: #ededed;
-    --primary-fg: #171717;
-  }
-}
+
 
 body {
   background: var(--background);
@@ -60,10 +57,7 @@ body {
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.dark .glass-panel {
-  background: rgba(26, 26, 26, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
+
 
 /* Smooth input focus rings */
 .focus-ring {

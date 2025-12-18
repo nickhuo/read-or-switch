@@ -9,6 +9,8 @@ interface FormalTaskProps {
 }
 
 export default function FormalTask({ participantId, onComplete }: FormalTaskProps) {
+    void participantId;
+
     const [stories, setStories] = useState<Story[]>([]);
     const [visitedStoryIds, setVisitedStoryIds] = useState<Set<number>>(new Set());
 

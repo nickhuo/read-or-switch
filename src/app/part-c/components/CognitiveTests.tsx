@@ -1,10 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import type { ChangeEvent, MouseEvent } from "react";
 
 interface CognitiveTestsProps {
     participantId: string;
     onComplete: () => void;
+}
+
+interface LetterResponseData {
+    problemId: number;
+    response: "S" | "D";
+    isCorrect: boolean;
+    reactionTimeMs: number;
+}
+
+interface VocabQuestion {
+    id: number;
+    word: string;
+    options: string[];
+    correctOption: number;
+}
+
+interface VocabResponseData {
+    questionId: number;
+    responseVal: string;
+    isCorrect: boolean;
+    reactionTimeMs: number;
 }
 
 // Mock Data matching the user's images somewhat
@@ -21,18 +43,21 @@ const letterProblems = [
     { id: 10, s1: "QLXSVT", s2: "QLNSVT", same: false },
 ];
 
-const vocabQuestions = [
+const vocabQuestions: VocabQuestion[] = [
     {
         id: 1, word: "mumble",
-        options: ["1 - speak indistinctly", "2 - complain", "3 - handle awkwardly", "4 - fall over something", "5 - tear apart", "6 - Not sure about the answer"]
+        options: ["1 - speak indistinctly", "2 - complain", "3 - handle awkwardly", "4 - fall over something", "5 - tear apart", "6 - Not sure about the answer"],
+        correctOption: 1,
     },
     {
         id: 2, word: "perspire",
-        options: ["1 - struggle", "2 - sweat", "3 - happen", "4 - penetrate", "5 - submit", "6 - Not sure about the answer"]
+        options: ["1 - struggle", "2 - sweat", "3 - happen", "4 - penetrate", "5 - submit", "6 - Not sure about the answer"],
+        correctOption: 2,
     },
     {
         id: 3, word: "gush",
-        options: ["1 - giggle", "2 - spout", "3 - sprinkle", "4 - hurry", "5 - cry", "6 - Not sure about the answer"]
+        options: ["1 - giggle", "2 - spout", "3 - sprinkle", "4 - hurry", "5 - cry", "6 - Not sure about the answer"],
+        correctOption: 2,
     },
 ];
 
@@ -41,22 +66,21 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     // Letter Test State
     const [letterResponses, setLetterResponses] = useState<Record<number, string>>({}); // 'S' or 'D'
-    const [letterData, setLetterData] = useState<any[]>([]); // To store timing and correctness
+    const [letterData, setLetterData] = useState<LetterResponseData[]>([]); // To store timing and correctness
     const [startTime, setStartTime] = useState<number>(0);
 
     // Vocab Test State
     const [vocabResponses, setVocabResponses] = useState<Record<number, string>>({});
-    const [vocabData, setVocabData] = useState<any[]>([]);
+    const [vocabData, setVocabData] = useState<VocabResponseData[]>([]);
 
     // Initialize timing when entering a phase
-    const handleIntroNext = () => {
+    const handleIntroNext = (event: MouseEvent<HTMLButtonElement>) => {
         setSubPhase("letter");
-        setStartTime(Date.now());
+        setStartTime(event.timeStamp);
     };
 
-    const handleLetterResponse = (id: number, val: "S" | "D") => {
-        const now = Date.now();
-        const reactionTime = now - startTime;
+    const handleLetterResponse = (event: MouseEvent<HTMLButtonElement>, id: number, val: "S" | "D") => {
+        const reactionTime = startTime ? event.timeStamp - startTime : 0;
 
         // Note: This simple overlapping RT tracking is imperfect if they change answers,
         // but sufficient for this prototype level.
@@ -82,7 +106,8 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
         });
     };
 
-    const handleLetterSubmit = async () => {
+    const handleLetterSubmit = async (event: MouseEvent<HTMLButtonElement>) => {
+        const eventTimestamp = event.timeStamp;
         try {
             await fetch("/api/part-c/cognitive/letter", {
                 method: "POST",
@@ -91,16 +116,15 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
             });
 
             setSubPhase("vocab");
-            setStartTime(Date.now());
+            setStartTime(eventTimestamp);
         } catch (e) {
             console.error(e);
             alert("Failed to save letter data");
         }
     };
 
-    const handleVocabResponse = (id: number, val: string) => {
-        const now = Date.now();
-        const reactionTime = now - startTime;
+    const handleVocabResponse = (event: ChangeEvent<HTMLInputElement>, id: number, val: string) => {
+        const reactionTime = startTime ? event.timeStamp - startTime : 0;
 
         setVocabResponses(prev => ({ ...prev, [id]: val }));
 
@@ -108,22 +132,17 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
             const filtered = prev.filter(p => p.questionId !== id);
             // Check correctness logic (mock for now, need simpler logic for 1-5 opt)
             // Extract number from option string "1 - ..."
-            const selectedNum = parseInt(val.split(" - ")[0]);
+            const selectedNum = Number.parseInt(val.split(" - ")[0], 10);
             const q = vocabQuestions.find(v => v.id === id);
             // In mock data: option_1 is array index 0.
             // In table: correct_option is 1-based index? In schema I made it 1-5.
             // Let's assume options are 1-based.
-            const isCorrect = q ? (selectedNum === 2) : false; // Dummy correction logic for now, hardcoded 2? Wait.
-            // Schema has correct_option. My mock data CognitiveTests.tsx doesn't have it explicitly in `vocabQuestions` constant properly?
-            // Ah, I need to add correct answers to the frontend mock data to check correctness,
-            // OR I just send raw response index and verify on backend/analysis.
-            // For now, I'll send basic isCorrect=true as placeholder or try to check.
-            // Given time constraints, I'll send isCorrect based on a dummy check or skip strict validation here.
+            const isCorrect = q ? (selectedNum === q.correctOption) : false;
 
             return [...filtered, {
                 questionId: id,
                 responseVal: val,
-                isCorrect: true, // Placeholder for "Analysis will grade this"
+                isCorrect,
                 reactionTimeMs: reactionTime
             }];
         });
@@ -182,14 +201,14 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
                             <div className="flex gap-3 mx-4">
                                 <button
-                                    onClick={() => handleLetterResponse(prob.id, "S")}
+                                    onClick={(event) => handleLetterResponse(event, prob.id, "S")}
                                     className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[prob.id] === "S"
                                         ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
                                         : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
                                         }`}
                                 >S</button>
                                 <button
-                                    onClick={() => handleLetterResponse(prob.id, "D")}
+                                    onClick={(event) => handleLetterResponse(event, prob.id, "D")}
                                     className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[prob.id] === "D"
                                         ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
                                         : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
@@ -238,7 +257,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                                             name={`vocab-${q.id}`}
                                             value={opt}
                                             checked={vocabResponses[q.id] === opt}
-                                            onChange={() => handleVocabResponse(q.id, opt)}
+                                            onChange={(event) => handleVocabResponse(event, q.id, opt)}
                                             className="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]"
                                         />
                                         <span className="text-sm text-[var(--foreground)]/80">{opt}</span>

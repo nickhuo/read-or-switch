@@ -36,23 +36,21 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
         // Timer runs only if not finished.
         // Requirement implies fixed time block? "Practice Block (4 minutes)".
         // Usually forced stop after 4 mins.
-        if (timeLeft > 0) {
-            timerRef.current = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) {
-                        clearInterval(timerRef.current!);
-                        onComplete(); // Force finish
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
+        timerRef.current = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(timerRef.current!);
+                    onComplete(); // Force finish
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
 
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, []); // Run once on mount
+    }, [onComplete]);
 
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
@@ -112,6 +110,10 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
     };
 
     const logAction = async (storyId: number, segmentId: number, type: "continue" | "switch" | "start_story") => {
+        void participantId;
+        void storyId;
+        void segmentId;
+        void type;
         // We could log reading time here if we tracked it per segment
         // For simple MVP: just fire and forget
         // Ideally we track time spent on *previous* segment before action.
