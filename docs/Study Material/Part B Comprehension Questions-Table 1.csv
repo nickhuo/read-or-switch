@@ -1,0 +1,2 @@
+StudyPartID,StoryTopicID,Predictability,PredictID,TextID,SP2ConID,StoryTitle,Order,Questions,Option_1,Option_2,Option_3,Option_4,CorrectAns
+2,T1P1,Yes,1,SP2T1P101,1,The Coffee Shop,1,"Teddy remained calm and attentive, making sure each drink was made properly and every customer felt _________. ",Word_1,Word_2,Word_3,Word_4,Word_3

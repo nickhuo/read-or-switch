@@ -1,0 +1,2 @@
+StudyPartID,SentSet,TextID,SentOrder,P1ConID,PredictID,Make_sense_ID,TextTypeID,GenTypeID,Questions,Option_1,Option_2,Option_3,Option_4,CorrectAns
+1,1,SP1SS0101,1,Pre1MS0TT1G1,1,0,1,1,Giraffes are known for their long necks and zebras for their ____. ,Word_1,Word_2,Word_3,Word_4,Word_3

@@ -255,7 +255,8 @@ INSERT IGNORE INTO vocabulary_questions (word, option_1, option_2, option_3, opt
 INSERT IGNORE INTO comprehension_questions (story_id, question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
 (1, 'A medical supplier is interested in understanding the market size of bone graft material. What kind of population may be in the market?', 'an athlete with severe fractures', 'a retiree with significant bone loss', 'a patient suffering from cancer', 'all of the above', 4),
 (1, 'A tissue banks is responsible for screening the medical histories of the donors and freeze the donated bones (T/F)', 'TRUE', 'FALSE', '', '', 1),
-(1, 'What could be a risk that is associated with surgical procedure of bone graft?', 'osteoporosis', 'infection', 'muscle atrophy', 'nerve damage', 2);
+(1, 'What could be a risk that is associated with surgical procedure of bone graft?', 'osteoporosis', 'infection', 'muscle atrophy', 'nerve damage', 2),
+(1, 'Due to ethical concerns, all bone graft materials can only come from donors who have died (T/F)', 'TRUE', 'FALSE', '', '', 2);
 
 -- ==========================================
 -- Part 2: Story Reading & Comprehension
