@@ -61,7 +61,7 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
     const handleSelectStory = async (story: Story) => {
         setCurrentStory(story);
         try {
-            const res = await fetch(`/api/part-b/segments?storyId=${story.id}`);
+            const res = await fetch(`/api/part-b/segments?storyId=${story.id}&phase=${phase}`);
             const data = await res.json();
             setSegments(data);
             setCurrentSegmentIndex(0);

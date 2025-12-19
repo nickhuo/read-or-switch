@@ -10,9 +10,9 @@ export async function GET(request: Request) {
     }
 
     try {
+        const tableName = phase === 'practice' ? 'part2_practice_stories' : 'part2_formal_stories';
         const stories = await query(
-            "SELECT * FROM part2_stories WHERE phase = ?",
-            [phase]
+            `SELECT * FROM ${tableName}`
         );
         return NextResponse.json(stories);
     } catch (error) {

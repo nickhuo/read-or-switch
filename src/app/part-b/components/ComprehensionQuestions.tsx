@@ -83,7 +83,7 @@ export default function ComprehensionQuestions({ participantId, phase, onComplet
                         <div className="flex gap-4 mb-6">
                             <span className="font-mono text-[var(--muted)] text-sm">{idx + 1}.</span>
                             <p className="text-lg font-medium text-[var(--foreground)] leading-relaxed">
-                                {q.sentence_text.replace("___", "________")}
+                                {q.question_text.replace("___", "________")}
                             </p>
                         </div>
 

@@ -10,12 +10,13 @@ export async function GET(request: Request) {
     }
 
     try {
+        const questionsTable = phase === 'practice' ? 'part2_practice_questions' : 'part2_formal_questions';
+        const storiesTable = phase === 'practice' ? 'part2_practice_stories' : 'part2_formal_stories';
+
         const questions = await query(
             `SELECT q.*, s.title as story_title 
-             FROM part2_questions q 
-             JOIN part2_stories s ON q.story_id = s.id 
-             WHERE s.phase = ?`,
-            [phase]
+             FROM ${questionsTable} q 
+             JOIN ${storiesTable} s ON q.story_id = s.id`
         );
         return NextResponse.json(questions);
     } catch (error) {
