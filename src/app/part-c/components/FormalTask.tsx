@@ -45,12 +45,13 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     }, []);
 
     useEffect(() => {
-        if ((view === "reading" || view === "question") && timeLeft > 0) {
+        // Run timer ONLY when reading
+        if (view === "reading" && timeLeft > 0) {
             timerRef.current = setInterval(() => {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
                         clearInterval(timerRef.current!);
-                        // Time up! But continue??
+                        // Time up logic could go here
                         return 0;
                     }
                     return prev - 1;
@@ -209,13 +210,17 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
 
     if (view === "reading" && currentStory && segments[currentSegmentIndex]) {
         return (
-            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 relative">
-                <div className="absolute top-6 right-8 font-mono font-medium text-[var(--muted)] text-sm bg-[var(--input-bg)] px-2 py-1 rounded">
-                    {formatTime(timeLeft)}
-                </div>
-                <div className="flex justify-between items-center mb-6">
+            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+                <div className="flex justify-between items-center mb-8 border-b border-[var(--border)] pb-4">
                     <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest">{currentStory.title}</h3>
-                    <span className="text-xs text-[var(--muted)]">Segment {currentSegmentIndex + 1}/{segments.length}</span>
+                    <div className="flex items-center gap-4">
+                        <span className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">
+                            Segment {currentSegmentIndex + 1}/{segments.length}
+                        </span>
+                        <div className="font-mono font-medium text-[var(--foreground)] bg-[var(--surface)] px-2 py-1 rounded text-sm border border-[var(--border)]">
+                            {formatTime(timeLeft)}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] min-h-[200px]">

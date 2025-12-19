@@ -31,18 +31,31 @@ async function main() {
     console.log('Connected.');
 
     try {
-        // 0. Apply Schema Changes
-        console.log('Applying schema updates from schema.sql...');
-        const schemaPath = path.resolve(process.cwd(), 'src/db/schema.sql');
-        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-        await connection.query(schemaSql);
-        console.log('Schema applied.');
-
-        console.log('Clearing existing Part 3 data...');
         const tablesToClear = [
             'part3_practice_responses', 'part3_practice_questions', 'part3_practice_actions', 'part3_practice_segments', 'part3_practice_stories', 'part3_practice_summaries',
             'part3_formal_responses', 'part3_formal_questions', 'part3_formal_actions', 'part3_formal_segments', 'part3_formal_stories', 'part3_formal_summaries'
         ];
+
+        console.log('Dropping existing Part 3 tables to ensure schema updates...');
+        await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+        for (const table of tablesToClear) {
+            try {
+                // DROP instead of TRUNCATE to enforce schema refresh
+                await connection.query(`DROP TABLE IF EXISTS ${table}`);
+                console.log(`Dropped ${table}`);
+            } catch (e: any) {
+                console.log(`Note: Could not drop ${table}: ${e.message}`);
+            }
+        }
+        await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+
+        // 0. Apply Schema Changes (Now will create fresh tables)
+        console.log('Applying schema updates from schema.sql...');
+        const schemaPath = path.resolve(process.cwd(), 'src/db/schema.sql');
+        const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+        // multi-statements enabled? Yes.
+        await connection.query(schemaSql);
+        console.log('Schema applied.');
 
         await connection.query('SET FOREIGN_KEY_CHECKS = 0');
         for (const table of tablesToClear) {
