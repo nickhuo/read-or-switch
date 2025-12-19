@@ -413,12 +413,22 @@ CREATE TABLE IF NOT EXISTS part2_formal_responses (
 
 CREATE TABLE IF NOT EXISTS part_a_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    study_part_id INT,
+    sent_set INT,
+    text_id VARCHAR(50),
+    sent_order INT,
+    p1_con_id VARCHAR(50),
+    predict_id INT,
+    make_sense_id INT,
+    text_type_id INT,
+    gen_type_id INT,
     question_text TEXT NOT NULL,
     option_1 TEXT NOT NULL,
     option_2 TEXT NOT NULL,
     option_3 TEXT NOT NULL,
     option_4 TEXT NOT NULL,
-    correct_option INT NOT NULL COMMENT '1-4'
+    correct_ans VARCHAR(255),
+    correct_option INT COMMENT '1-4 (Legacy/index)'
 );
 
 CREATE TABLE IF NOT EXISTS part_a_responses (
