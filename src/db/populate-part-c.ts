@@ -97,10 +97,10 @@ async function main() {
 
                     // Insert 4 Fixed Rating Questions for this segment
                     const ratingQuestions = [
-                        "How much did you learn from this segment? (0-100)",
-                        "How difficult was this segment? (0-100)",
-                        "How interesting was this segment? (0-100)",
-                        "How predictable was this segment? (0-100)"
+                        "Compared to the other articles that you have read today, how much new information was in this article?",
+                        "How easy was this article to read?",
+                        "How much did you learn from this article?",
+                        "How much did you learn overall from the articles you have read so far today (including this article)?"
                     ];
 
                     for (let qIdx = 0; qIdx < 4; qIdx++) {
