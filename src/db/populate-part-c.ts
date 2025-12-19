@@ -33,7 +33,10 @@ async function main() {
     try {
         const tablesToClear = [
             'part3_practice_responses', 'part3_practice_questions', 'part3_practice_actions', 'part3_practice_segments', 'part3_practice_stories', 'part3_practice_summaries',
-            'part3_formal_responses', 'part3_formal_questions', 'part3_formal_actions', 'part3_formal_segments', 'part3_formal_stories', 'part3_formal_summaries'
+            'part3_formal_responses', 'part3_formal_questions', 'part3_formal_actions', 'part3_formal_segments', 'part3_formal_stories', 'part3_formal_summaries',
+            // Legacy Part B tables to drop
+            'part4_comprehension_responses', 'comprehension_questions',
+            'story_responses', 'participant_actions', 'story_segments', 'stories'
         ];
 
         console.log('Dropping existing Part 3 tables to ensure schema updates...');
