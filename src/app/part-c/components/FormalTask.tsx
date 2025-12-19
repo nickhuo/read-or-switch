@@ -73,7 +73,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     const handleSelectStory = async (story: Story) => {
         setCurrentStory(story);
         try {
-            const res = await fetch(`/api/part-c/segments?storyId=${story.id}&phase=formal`);
+            const res = await fetch(`/api/part-c/segments?storyId=${story.id}&phase=formal&participantId=${participantId}`);
             const data = await res.json();
             setSegments(data);
 

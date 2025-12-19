@@ -29,15 +29,53 @@ export async function POST(request: Request) {
     try {
         await connection.beginTransaction();
 
-        // 1. Insert Participant (Ignore if exists)
-        await connection.execute(
-            "INSERT IGNORE INTO participants (participant_id) VALUES (?)",
-            [participantId]
-        );
+        // 1. Insert Participant (with conditions)
+        const part2Condition = Math.floor(Math.random() * 2); // 0 or 1
+        const part3Condition = Math.floor(Math.random() * 3); // 0, 1, or 2
+
+        try {
+            await connection.execute(
+                `INSERT INTO participants (participant_id, part2_condition, part3_condition) 
+                 VALUES (?, ?, ?) 
+                 ON DUPLICATE KEY UPDATE 
+                 part2_condition = IFNULL(part2_condition, VALUES(part2_condition)), 
+                 part3_condition = IFNULL(part3_condition, VALUES(part3_condition))`,
+                [participantId, part2Condition, part3Condition]
+            );
+        } catch (err: any) {
+            // Self-healing: invalid column
+            if (err.code === 'ER_BAD_FIELD_ERROR') {
+                console.log("Detected missing columns, attempting to fix schema...");
+                await connection.rollback(); // Rollback current transaction to allow DDL
+
+                // Add columns (one by one or together)
+                // Note: IF NOT EXISTS available in newer MySQL/MariaDB, but standard MySQL might fail if exists.
+                // We'll try adding them. If they exist, it might fail, which is fine, we just proceed to retry.
+                try {
+                    await connection.query(`ALTER TABLE participants ADD COLUMN part2_condition INT COMMENT '0 or 1'`);
+                } catch (e) { }
+                try {
+                    await connection.query(`ALTER TABLE participants ADD COLUMN part3_condition INT COMMENT '0, 1, or 2'`);
+                } catch (e) { }
+
+                // Restart transaction
+                await connection.beginTransaction();
+                await connection.execute(
+                    `INSERT INTO participants (participant_id, part2_condition, part3_condition) 
+                     VALUES (?, ?, ?) 
+                     ON DUPLICATE KEY UPDATE 
+                     part2_condition = IFNULL(part2_condition, VALUES(part2_condition)), 
+                     part3_condition = IFNULL(part3_condition, VALUES(part3_condition))`,
+                    [participantId, part2Condition, part3Condition]
+                );
+            } else {
+                throw err;
+            }
+        }
 
         // 2. Insert or Update Demographics
         const dob = `${dobYear}-${dobMonth}-${dobDay}`;
-        // Delete existing demographics if any to simplify update (or use UPDATE)
+        // Delete existing demographics if any to simplify update
         await connection.execute("DELETE FROM demographics WHERE participant_id = ?", [participantId]);
 
         await connection.execute(
@@ -61,10 +99,8 @@ export async function POST(request: Request) {
         );
 
         // 3. Insert Knowledge Ratings
-        // First delete existing knowledge to avoid duplicates
         await connection.execute("DELETE FROM participant_knowledge WHERE participant_id = ?", [participantId]);
 
-        // Get topic IDs
         const [topics] = await connection.query<RowDataPacket[]>("SELECT id, name FROM topics");
         const topicMap = new Map(topics.map((t: RowDataPacket) => [t.name, t.id]));
 
@@ -81,11 +117,11 @@ export async function POST(request: Request) {
         await connection.commit();
         return NextResponse.json({ success: true });
     } catch (error: unknown) {
-        await connection.rollback();
+        if (connection) await connection.rollback();
         console.error("Database error details:", error);
         const errorMessage = error instanceof Error ? error.message : "Database error";
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     } finally {
-        connection.release();
+        if (connection) connection.release();
     }
 }

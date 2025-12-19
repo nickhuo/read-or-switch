@@ -4,7 +4,9 @@ USE `read-or-switch`;
 CREATE TABLE IF NOT EXISTS participants (
 
     participant_id BIGINT PRIMARY KEY,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    part2_condition INT COMMENT '0 or 1',
+    part3_condition INT COMMENT '0, 1, or 2'
 );
 
 CREATE TABLE IF NOT EXISTS demographics (

@@ -51,7 +51,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
     const handleSelectStory = async (story: Story) => {
         setCurrentStory(story);
         try {
-            const res = await fetch(`/api/part-c/segments?storyId=${story.id}&phase=practice`);
+            const res = await fetch(`/api/part-c/segments?storyId=${story.id}&phase=practice&participantId=${participantId}`);
             const data = await res.json();
             setSegments(data);
 
