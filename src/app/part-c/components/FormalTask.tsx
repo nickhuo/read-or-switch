@@ -1,55 +1,56 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Story, Segment } from "../types";
+import { Story, Segment, Question } from "../../part-b/types";
+import SegmentFeedback from "./SegmentFeedback";
 
 interface FormalTaskProps {
     participantId: string;
     onComplete: () => void;
 }
 
-export default function FormalTask({ participantId, onComplete }: FormalTaskProps) {
-    void participantId;
+type ViewState = "instructions" | "story-selection" | "reading" | "question";
 
+export default function FormalTask({ participantId, onComplete }: FormalTaskProps) {
     const [stories, setStories] = useState<Story[]>([]);
     const [visitedStoryIds, setVisitedStoryIds] = useState<Set<number>>(new Set());
 
-    const [view, setView] = useState<"instructions" | "story-selection" | "reading" | "interstitial-questions">("instructions");
+    const [view, setView] = useState<ViewState>("instructions");
     const [currentStory, setCurrentStory] = useState<Story | null>(null);
     const [segments, setSegments] = useState<Segment[]>([]);
     const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+
+    // Questions State
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [pendingAction, setPendingAction] = useState<"continue" | "switch" | null>(null);
 
     // Timer Logic
     const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Questions
-    // Questions state matching PracticeTask
-    const [comprehensionQ, setComprehensionQ] = useState("");
-    const [learningQ, setLearningQ] = useState(50);
-    const [difficultyQ, setDifficultyQ] = useState(50);
-    const [interestQ, setInterestQ] = useState(50);
-
     useEffect(() => {
-        // Fetch formal stories (5 subtopics, 11 articles each is the requirement, 
-        // but for now we fetch whatever 'formal' stories are in DB and group them or just list them)
         fetch("/api/part-c/stories?phase=formal")
             .then(res => res.json())
             .then(data => setStories(data))
             .catch(err => console.error("Failed to fetch stories", err));
     }, []);
 
-    // Timer only runs when reading
+    // Fetch all Formal questions
+    const [allQuestions, setAllQuestions] = useState<Question[]>([]);
     useEffect(() => {
-        if (view === "reading" && timeLeft > 0) {
+        fetch("/api/part-c/questions?phase=formal")
+            .then(res => res.json())
+            .then(data => setAllQuestions(data))
+            .catch(err => console.error(err));
+    }, []);
+
+    useEffect(() => {
+        if ((view === "reading" || view === "question") && timeLeft > 0) {
             timerRef.current = setInterval(() => {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
                         clearInterval(timerRef.current!);
-                        // Time up! But we need to ensure they visited all 5 topics.
-                        // Requirement: "Must visit all 5 subtopics to proceed"
-                        // If time is up, maybe we force them to finish current questions and then check?
-                        // For now, let's just alert.
+                        // Time up! But continue??
                         return 0;
                     }
                     return prev - 1;
@@ -71,52 +72,74 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     const handleSelectStory = async (story: Story) => {
         setCurrentStory(story);
         try {
-            const res = await fetch(`/api/part-c/segments?storyId=${story.id}`);
+            const res = await fetch(`/api/part-c/segments?storyId=${story.id}&phase=formal`);
             const data = await res.json();
             setSegments(data);
+
+            // Filter questions for this story
+            const storyQuestions = allQuestions.filter(q => q.story_id === story.id);
+            setQuestions(storyQuestions);
+
             setCurrentSegmentIndex(0);
             setView("reading");
-            // Do NOT mark as visited here, only on switch or finish
         } catch (error) {
             console.error(error);
         }
     };
 
-    const handleContinue = () => {
-        if (currentSegmentIndex < segments.length - 1) {
-            setCurrentSegmentIndex(prev => prev + 1);
-        } else {
-            if (currentStory) {
-                setVisitedStoryIds(prev => new Set(prev).add(currentStory.id));
-            }
-            setView("interstitial-questions");
-        }
+    const triggerQuestion = (action: "continue" | "switch") => {
+        setPendingAction(action);
+        setView("question");
     };
 
-    const handleSwitch = () => {
+    const handleFeedbackSubmit = async (summary: string, ratings: { questionId: number, value: number }[]) => {
+        const currentSegment = segments[currentSegmentIndex];
+
+        try {
+            await fetch("/api/part-c/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    participantId,
+                    phase: "formal",
+                    storyId: currentStory?.id,
+                    segmentOrder: currentSegment.segment_order,
+                    summary,
+                    responses: ratings.map(r => ({
+                        questionId: r.questionId,
+                        value: r.value,
+                        isCorrect: false,
+                        reactionTimeMs: 0
+                    }))
+                })
+            });
+        } catch (e) {
+            console.error("Failed to submit response", e);
+        }
+
+        // Mark story as 'visited' (at least 1 segment done) if continuing or switching
         if (currentStory) {
             setVisitedStoryIds(prev => new Set(prev).add(currentStory.id));
         }
-        setView("interstitial-questions");
-    };
 
-    const handleSubmitQuestions = () => {
-        setView("story-selection");
-        // Reset questions
-        setComprehensionQ("");
-        setLearningQ(50);
-        setDifficultyQ(50);
-        setInterestQ(50);
-
-        // Check completion condition
-        // "Must visit all 5 subtopics to proceed" - assuming 'stories' from API are the subtopics?
-        // Or if stories are articles within subtopics, we need to track subtopics.
-        // For simplified implementation, assuming we just need to visit all 'stories' presented.
-        const allVisited = stories.every(s => visitedStoryIds.has(s.id));
-        if (allVisited && timeLeft <= 0) {
-            onComplete();
+        // Logic for next view
+        if (pendingAction === "switch") {
+            setView("story-selection");
+        } else if (pendingAction === "continue") {
+            if (currentSegmentIndex < segments.length - 1) {
+                setCurrentSegmentIndex(prev => prev + 1);
+                setView("reading");
+            } else {
+                setView("story-selection");
+            }
         }
+        setPendingAction(null);
     };
+
+    const segOrder = segments[currentSegmentIndex]?.segment_order || 1;
+    const startOrder = (segOrder - 1) * 4 + 1;
+    const endOrder = startOrder + 3;
+    const currentQuestions = questions.filter(q => q.question_order !== undefined && q.question_order >= startOrder && q.question_order <= endOrder);
 
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
@@ -157,10 +180,10 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                     {stories.map(story => (
                         <button
                             key={story.id}
-                            onClick={() => !visitedStoryIds.has(story.id) && handleSelectStory(story)}
-                            disabled={visitedStoryIds.has(story.id)}
+                            onClick={() => handleSelectStory(story)}
+                            // Formal task usually allows revisiting too
                             className={`p-6 rounded-xl border text-left transition-all duration-200 min-h-[120px] flex flex-col justify-between ${visitedStoryIds.has(story.id)
-                                ? "bg-[var(--input-bg)] border-transparent text-[var(--muted)] cursor-not-allowed"
+                                ? "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] opacity-80" // Visited style
                                 : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)] hover:shadow-sm"
                                 }`}
                         >
@@ -184,71 +207,53 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
         );
     }
 
-    if (view === "reading" && currentStory) {
+    if (view === "reading" && currentStory && segments[currentSegmentIndex]) {
         return (
             <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 relative">
                 <div className="absolute top-6 right-8 font-mono font-medium text-[var(--muted)] text-sm bg-[var(--input-bg)] px-2 py-1 rounded">
                     {formatTime(timeLeft)}
                 </div>
-                <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest mb-6">{currentStory.title}</h3>
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest">{currentStory.title}</h3>
+                    <span className="text-xs text-[var(--muted)]">Segment {currentSegmentIndex + 1}/{segments.length}</span>
+                </div>
 
                 <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] min-h-[200px]">
-                    {segments[currentSegmentIndex]?.content}
+                    {segments[currentSegmentIndex].content}
                 </div>
 
                 <div className="flex justify-between gap-6">
                     <button
-                        onClick={handleSwitch}
+                        onClick={() => triggerQuestion("switch")}
                         className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
                     >
                         Switch Topic
                     </button>
                     <button
-                        onClick={handleContinue}
+                        onClick={() => triggerQuestion("continue")}
                         className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium text-sm shadow-sm focus-ring"
                     >
-                        Next Segment
+                        {currentSegmentIndex < segments.length - 1 ? "Next Segment" : "Finish Story"}
                     </button>
                 </div>
             </div>
         );
     }
 
-    if (view === "interstitial-questions") {
-        return (
-            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
-                <h2 className="text-xl font-semibold mb-8 text-[var(--foreground)]">Quick Check</h2>
-
-                <div className="space-y-8">
-                    {/* Questions */}
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">1. Short Comprehension (Summary)</label>
-                        <textarea
-                            className="w-full border border-[var(--border)] bg-[var(--surface)] p-3 rounded-lg focus-ring text-sm"
-                            rows={3}
-                            placeholder="Briefly summarize what you just read..."
-                            value={comprehensionQ}
-                            onChange={(e) => setComprehensionQ(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">2. How much did you learn? ({learningQ})</label>
-                        <input type="range" min="0" max="100" value={learningQ} onChange={(e) => setLearningQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">3. How difficult was this? ({difficultyQ})</label>
-                        <input type="range" min="0" max="100" value={difficultyQ} onChange={(e) => setDifficultyQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">4. How interesting was this? ({interestQ})</label>
-                        <input type="range" min="0" max="100" value={interestQ} onChange={(e) => setInterestQ(Number(e.target.value))} className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]" />
-                    </div>
-
-                    <button onClick={handleSubmitQuestions} className="w-full bg-[var(--primary)] text-[var(--primary-fg)] py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring">
-                        Submit & Continue
-                    </button>
+    if (view === "question") {
+        if (currentQuestions.length === 0) {
+            return (
+                <div className="max-w-xl mx-auto glass-panel p-10 mt-12 text-center">
+                    <p>No questions loaded for this segment.</p>
+                    <button onClick={() => handleFeedbackSubmit("No questions found", [])} className="bg-[var(--primary)] text-[var(--primary-fg)] px-4 py-2 rounded mt-4">Continue</button>
                 </div>
-            </div>
+            );
+        }
+        return (
+            <SegmentFeedback
+                questions={currentQuestions}
+                onSubmit={handleFeedbackSubmit}
+            />
         );
     }
 

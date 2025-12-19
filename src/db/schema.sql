@@ -160,53 +160,162 @@ JOIN (SELECT 1 as n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 
 WHERE title != 'The Lost Key';
 
 -- ==========================================
--- Part 3: Cognitive Tests
+-- Part 3: Text Foraging (Part C)
 -- ==========================================
 
--- Letter Comparison Problems (Static Content)
-CREATE TABLE IF NOT EXISTS letter_comparison_problems (
+-- PRACTICE Tables
+CREATE TABLE IF NOT EXISTS part3_practice_stories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    string_1 VARCHAR(255) NOT NULL,
-    string_2 VARCHAR(255) NOT NULL,
-    is_same BOOLEAN NOT NULL
+    title VARCHAR(255) NOT NULL,
+    story_topic_id VARCHAR(50)
 );
 
--- Letter Comparison Responses
-CREATE TABLE IF NOT EXISTS part3_letter_comparison_responses (
+CREATE TABLE IF NOT EXISTS part3_practice_segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    content TEXT NOT NULL,
+    segment_order INT NOT NULL,
+    text_id VARCHAR(50),
+    predictability VARCHAR(20),
+    predict_id INT,
+    sp2_con_id VARCHAR(50),
+    FOREIGN KEY (story_id) REFERENCES part3_practice_stories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS part3_practice_actions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     participant_id BIGINT NOT NULL,
-    problem_id INT NOT NULL,
-    response_same BOOLEAN NOT NULL COMMENT 'User response: True if they thought it was same',
-    is_correct BOOLEAN NOT NULL,
-    reaction_time_ms INT NOT NULL,
+    story_id INT NOT NULL,
+    segment_id INT,
+    action_type ENUM('continue', 'switch', 'start_story') NOT NULL,
+    reading_time_ms INT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (problem_id) REFERENCES letter_comparison_problems(id)
+    FOREIGN KEY (story_id) REFERENCES part3_practice_stories(id),
+    FOREIGN KEY (segment_id) REFERENCES part3_practice_segments(id)
 );
 
--- Vocabulary Questions (Static Content)
-CREATE TABLE IF NOT EXISTS vocabulary_questions (
+-- Summary/Response per segment? 
+-- User requirement: "Jump to summary/rating page to fill answer for *this segment* question".
+-- If it's *per segment*, we might need segment_id in response table? 
+-- Part B schema has question_id in response. If question is linked to *segment*, then yes.
+-- Or just linked to story if questions are general?
+-- "Answer for *this segment* question". Implies question is linked to segment.
+-- But Part B questions are linked to *story*. 
+-- I will add `segment_id` to questions table to support per-segment questions if needed, 
+-- OR just rely on questions being mapped? 
+-- Actually, strict mirroring of Part B: Part B questions are `story_id` FK.
+-- If Part C questions are specific to a segment, we might need a way to know which question belongs to which segment.
+-- BUT, user said "same table fields as part b". Part B has `story_id`.
+-- I'll stick to `story_id` but logically we will select questions based on the *current segment* if possible?
+-- Or maybe each "segment" IS a "story" in this model? No, "user read one segment... click continue... jump".
+-- I will add `segment_id` to `part3_..._questions` as an optional FK, violating "same fields" slightly but necessary for "this segment question".
+-- Wait, if I must adhere strictly to "same fields", I can't add `segment_id`.
+-- Maybe `question_order` matches `segment_order`? Yes, that's a cleaner way.
+-- If question_order == segment_order, then we show that question.
+
+CREATE TABLE IF NOT EXISTS part3_practice_summaries (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    word VARCHAR(255) NOT NULL,
+    participant_id BIGINT NOT NULL,
+    story_id INT NOT NULL,
+    segment_order INT NOT NULL,
+    content TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (story_id) REFERENCES part3_practice_stories(id)
+);
+
+CREATE TABLE IF NOT EXISTS part3_practice_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    question_text TEXT NOT NULL,
+    question_order INT, -- Use this to map to segment_order
     option_1 VARCHAR(255) NOT NULL,
     option_2 VARCHAR(255) NOT NULL,
     option_3 VARCHAR(255) NOT NULL,
     option_4 VARCHAR(255) NOT NULL,
-    option_5 VARCHAR(255) NOT NULL,
-    correct_option INT NOT NULL COMMENT '1-5'
+    correct_option INT NOT NULL COMMENT '1-4',
+    FOREIGN KEY (story_id) REFERENCES part3_practice_stories(id)
 );
 
--- Vocabulary Responses
-CREATE TABLE IF NOT EXISTS part3_vocabulary_responses (
+CREATE TABLE IF NOT EXISTS part3_practice_responses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     participant_id BIGINT NOT NULL,
     question_id INT NOT NULL,
-    response_option INT COMMENT '1-6, where 6 is "Not sure"',
+    response_option INT NOT NULL COMMENT '1-4',
     is_correct BOOLEAN NOT NULL,
     reaction_time_ms INT NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (question_id) REFERENCES vocabulary_questions(id)
+    FOREIGN KEY (question_id) REFERENCES part3_practice_questions(id)
+);
+
+-- FORMAL Tables
+CREATE TABLE IF NOT EXISTS part3_formal_stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    story_topic_id VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS part3_formal_segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    content TEXT NOT NULL,
+    segment_order INT NOT NULL,
+    text_id VARCHAR(50),
+    predictability VARCHAR(20),
+    predict_id INT,
+    sp2_con_id VARCHAR(50),
+    FOREIGN KEY (story_id) REFERENCES part3_formal_stories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS part3_formal_actions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    story_id INT NOT NULL,
+    segment_id INT,
+    action_type ENUM('continue', 'switch', 'start_story') NOT NULL,
+    reading_time_ms INT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (story_id) REFERENCES part3_formal_stories(id),
+    FOREIGN KEY (segment_id) REFERENCES part3_formal_segments(id)
+);
+
+CREATE TABLE IF NOT EXISTS part3_formal_summaries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    story_id INT NOT NULL,
+    segment_order INT NOT NULL,
+    content TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (story_id) REFERENCES part3_formal_stories(id)
+);
+
+CREATE TABLE IF NOT EXISTS part3_formal_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    question_text TEXT NOT NULL,
+    question_order INT,
+    option_1 VARCHAR(255) NOT NULL,
+    option_2 VARCHAR(255) NOT NULL,
+    option_3 VARCHAR(255) NOT NULL,
+    option_4 VARCHAR(255) NOT NULL,
+    correct_option INT NOT NULL COMMENT '1-4',
+    FOREIGN KEY (story_id) REFERENCES part3_formal_stories(id)
+);
+
+CREATE TABLE IF NOT EXISTS part3_formal_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT NOT NULL COMMENT '1-4',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES part3_formal_questions(id)
 );
 
 -- ==========================================
