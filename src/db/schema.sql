@@ -32,11 +32,10 @@ CREATE TABLE IF NOT EXISTS demographics (
 DROP TABLE IF EXISTS participant_knowledge;
 CREATE TABLE IF NOT EXISTS participant_knowledge (
     participant_id BIGINT,
-    topic_id INT,
+    topic_id VARCHAR(50),
     rating INT COMMENT '1-7 scale',
     PRIMARY KEY (participant_id, topic_id),
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (topic_id) REFERENCES topics(id)
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
 );
 
 -- Part A: Sentence Reading Study Tables

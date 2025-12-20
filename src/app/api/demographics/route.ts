@@ -101,8 +101,16 @@ export async function POST(request: Request) {
         // 3. Insert Knowledge Ratings
         await connection.execute("DELETE FROM participant_knowledge WHERE participant_id = ?", [participantId]);
 
-        const [topics] = await connection.query<RowDataPacket[]>("SELECT id, name FROM topics");
-        const topicMap = new Map(topics.map((t: RowDataPacket) => [t.name, t.id]));
+        // Fetch topics from Part B and Part C
+        const [topicsB] = await connection.query<RowDataPacket[]>("SELECT id, title FROM part_b_topic");
+        const [topicsC] = await connection.query<RowDataPacket[]>("SELECT topID as id, topTitle as title FROM part_c_topic");
+        const [topicsCPrac] = await connection.query<RowDataPacket[]>("SELECT topID as id, topTitle as title FROM part_c_prac_topic");
+
+        const topicMap = new Map<string, string>();
+
+        topicsB.forEach((t: any) => topicMap.set(t.title, t.id));
+        topicsC.forEach((t: any) => topicMap.set(t.title, t.id));
+        topicsCPrac.forEach((t: any) => topicMap.set(t.title, t.id));
 
         for (const [topicName, rating] of Object.entries(knowledge)) {
             const topicId = topicMap.get(topicName);
