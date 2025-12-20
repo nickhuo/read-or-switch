@@ -123,11 +123,20 @@ CREATE TABLE IF NOT EXISTS part_a_logs (
 -- ==========================================
 
 -- PRACTICE Tables
+
+DROP TABLE IF EXISTS part_b_practice_topic;
+CREATE TABLE IF NOT EXISTS part_b_practice_topic (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL
+);
+
 DROP TABLE IF EXISTS part_b_practice_stories;
 CREATE TABLE IF NOT EXISTS part_b_practice_stories (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    topic_id VARCHAR(50),
     title VARCHAR(255) NOT NULL,
-    story_topic_id VARCHAR(50)
+    story_label VARCHAR(50),
+    FOREIGN KEY (topic_id) REFERENCES part_b_practice_topic(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS part_b_practice_segments;
@@ -185,11 +194,20 @@ CREATE TABLE IF NOT EXISTS part_b_practice_responses (
 );
 
 -- FORMAL Tables
+
+DROP TABLE IF EXISTS part_b_topic;
+CREATE TABLE IF NOT EXISTS part_b_topic (
+    id VARCHAR(50) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL
+);
+
 DROP TABLE IF EXISTS part_b_formal_stories;
 CREATE TABLE IF NOT EXISTS part_b_formal_stories (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    topic_id VARCHAR(50),
     title VARCHAR(255) NOT NULL,
-    story_topic_id VARCHAR(50)
+    story_label VARCHAR(50),
+    FOREIGN KEY (topic_id) REFERENCES part_b_topic(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS part_b_formal_segments;
@@ -253,8 +271,7 @@ CREATE TABLE IF NOT EXISTS part_b_formal_responses (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
     FOREIGN KEY (question_id) REFERENCES part_b_formal_questions(id)
-); 
-
+);
 
 -- ==========================================
 -- Part C: Text Foraging
