@@ -123,7 +123,7 @@ function PartAContent() {
 
     }, [pickNextSet]);
 
-    async function logAction(action: "continue" | "switch" | "start_set") {
+    async function logAction(action: "continue" | "switch" | "start_set" | "word_reveal", wordIndex?: number) {
         if (!participantId || !currentSetId) return;
         try {
             await fetch("/api/part-a/log", {
@@ -133,6 +133,7 @@ function PartAContent() {
                     participantId,
                     setId: currentSetId,
                     sentenceIndex: currentIndex,
+                    wordIndex,
                     action
                 })
             });
@@ -192,6 +193,10 @@ function PartAContent() {
             if (e.code === "Space") {
                 e.preventDefault();
 
+                // Log the word that was just read (the one currently visible)
+                // We don't await this to avoid blocking the UI
+                logAction("word_reveal", currentWordIndex);
+
                 if (currentWordIndex < words.length - 1) {
                     setCurrentWordIndex(prev => prev + 1);
                 } else {
@@ -203,7 +208,7 @@ function PartAContent() {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [step, readingPhase, currentWordIndex, words.length]);
+    }, [step, readingPhase, currentWordIndex, words.length, currentSetId, currentIndex, logAction]);
 
 
     if (loading) return <div>Loading experiment data...</div>;
@@ -268,7 +273,7 @@ function PartAContent() {
                     {readingPhase === "decision" && (
                         <div className="max-w-3xl w-full flex justify-between items-center px-4 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
                             <button onClick={handleSwitch} className={outlineBtn}>
-                                Switch Topic
+                                Go To Other Topic
                             </button>
                             <button onClick={handleContinue} className={primaryBtn}>
                                 Continue Reading

@@ -445,6 +445,18 @@ CREATE TABLE IF NOT EXISTS part_a_responses (
     FOREIGN KEY (question_id) REFERENCES part_a_questions(id)
 );
 
+CREATE TABLE IF NOT EXISTS part_a_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    set_id INT NOT NULL,
+    sentence_index INT NOT NULL,
+    word_index INT,
+    action_type VARCHAR(50) DEFAULT 'word_reveal',
+    reading_time_ms INT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+);
+
 -- Seed Part A Questions (Mock)
 INSERT IGNORE INTO part_a_questions (question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
 ('What was the main theme of the sentences about the fox?', 'Laziness', 'Speed', 'Agility', 'Colors', 3),
