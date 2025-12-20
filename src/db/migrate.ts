@@ -28,29 +28,59 @@ const dbConfig = {
     multipleStatements: true
 };
 
-function parseCSVLine(line: string): string[] {
-    const values: string[] = [];
-    let currentValue = '';
+// Robust CSV API that handles newlines in quotes
+function parseCSV(content: string): string[][] {
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentVal = '';
     let insideQuotes = false;
 
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
+    // Normalize line endings to \n seems risky if we want to preserve data, 
+    // but typically safe for standard text. 
+    // Better to handle \r\n in loop.
+
+    for (let i = 0; i < content.length; i++) {
+        const char = content[i];
+        const nextChar = content[i + 1];
+
         if (char === '"') {
-            if (insideQuotes && line[i + 1] === '"') {
-                currentValue += '"';
-                i++;
+            if (insideQuotes && nextChar === '"') {
+                currentVal += '"';
+                i++; // Skip the escaped quote
             } else {
                 insideQuotes = !insideQuotes;
             }
         } else if (char === ',' && !insideQuotes) {
-            values.push(currentValue.trim());
-            currentValue = '';
+            currentRow.push(currentVal.trim());
+            currentVal = '';
+        } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !insideQuotes) {
+            currentRow.push(currentVal.trim());
+            if (currentRow.length > 0 || currentVal.length > 0) {
+                rows.push(currentRow);
+            }
+            currentRow = [];
+            currentVal = '';
+            if (char === '\r') i++; // Handling \r\n, skip the \n
+        } else if (char === '\r' && !insideQuotes) {
+            // Handle \r only line endings
+            currentRow.push(currentVal.trim());
+            if (currentRow.length > 0 || currentVal.length > 0) {
+                rows.push(currentRow);
+            }
+            currentRow = [];
+            currentVal = '';
         } else {
-            currentValue += char;
+            currentVal += char;
         }
     }
-    values.push(currentValue.trim());
-    return values;
+
+    // Push any remaining data
+    if (currentRow.length > 0 || currentVal.length > 0) {
+        currentRow.push(currentVal.trim());
+        rows.push(currentRow);
+    }
+
+    return rows;
 }
 
 async function populatePartA(connection: mysql.Connection) {
@@ -63,14 +93,12 @@ async function populatePartA(connection: mysql.Connection) {
     if (fs.existsSync(sentencesPath)) {
         console.log(`Reading ${sentencesPath}...`);
         const content = fs.readFileSync(sentencesPath, 'utf8');
-        const lines = content.split('\n').filter(l => l.trim().length > 0);
-        const dataLines = lines.slice(1);
+        const rows = parseCSV(content).slice(1);
 
-        if (dataLines.length > 0) {
+        if (rows.length > 0) {
             await connection.query('TRUNCATE TABLE part_a_sentences');
 
-            for (const line of dataLines) {
-                const cols = parseCSVLine(line);
+            for (const cols of rows) {
                 if (cols.length < 15) continue;
                 await connection.execute(`
                     INSERT INTO part_a_sentences 
@@ -80,7 +108,7 @@ async function populatePartA(connection: mysql.Connection) {
                     cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12], cols[13], cols[14]
                 ]);
             }
-            console.log(`Inserted ${dataLines.length} rows into part_a_sentences.`);
+            console.log(`Inserted ${rows.length} rows into part_a_sentences.`);
         }
     } else {
         console.warn(`File not found: ${sentencesPath}`);
@@ -90,14 +118,12 @@ async function populatePartA(connection: mysql.Connection) {
     if (fs.existsSync(questionsPath)) {
         console.log(`Reading ${questionsPath}...`);
         const content = fs.readFileSync(questionsPath, 'utf8');
-        const lines = content.split('\n').filter(l => l.trim().length > 0);
-        const dataLines = lines.slice(1);
+        const rows = parseCSV(content).slice(1);
 
-        if (dataLines.length > 0) {
+        if (rows.length > 0) {
             await connection.query('TRUNCATE TABLE part_a_questions');
 
-            for (const line of dataLines) {
-                const cols = parseCSVLine(line);
+            for (const cols of rows) {
                 if (cols.length < 15) continue;
 
                 const correctAns = cols[14].trim();
@@ -115,7 +141,7 @@ async function populatePartA(connection: mysql.Connection) {
                     cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12], cols[13], cols[14], correctOption
                 ]);
             }
-            console.log(`Inserted ${dataLines.length} rows into part_a_questions.`);
+            console.log(`Inserted ${rows.length} rows into part_a_questions.`);
         }
     } else {
         console.warn(`File not found: ${questionsPath}`);
@@ -150,7 +176,7 @@ async function populatePartB(connection: mysql.Connection) {
     if (fs.existsSync(formalStoriesPath)) {
         console.log(`Reading ${formalStoriesPath}...`);
         const content = fs.readFileSync(formalStoriesPath, 'utf8');
-        const lines = content.split('\n').filter(l => l.trim().length > 0).slice(1);
+        const rows = parseCSV(content).slice(1);
 
         // Extract Topics and Stories
         // Map TopicID (T1) -> Title
@@ -160,8 +186,7 @@ async function populatePartB(connection: mysql.Connection) {
         // Segments
         const segments: any[] = [];
 
-        for (const line of lines) {
-            const cols = parseCSVLine(line);
+        for (const cols of rows) {
             // Cols: StudyPartID, StoryTopicID, Predictability, PredictID, TextID, SP2ConID, StoryTitle, Order, StoryText
             if (cols.length < 9) continue;
 
@@ -236,11 +261,10 @@ async function populatePartB(connection: mysql.Connection) {
         if (fs.existsSync(questionsPath)) {
             console.log(`Reading ${questionsPath}...`);
             const qContent = fs.readFileSync(questionsPath, 'utf8');
-            const qLines = qContent.split('\n').filter(l => l.trim().length > 0).slice(1);
+            const qRows = parseCSV(qContent).slice(1);
 
             let qCount = 0;
-            for (const line of qLines) {
-                const cols = parseCSVLine(line);
+            for (const cols of qRows) {
                 // Cols: StudyPartID, StoryTopicID...
                 if (cols.length < 14) continue;
 
@@ -280,13 +304,12 @@ async function populatePartB(connection: mysql.Connection) {
     if (fs.existsSync(practicePath)) {
         console.log(`Reading ${practicePath}...`);
         const content = fs.readFileSync(practicePath, 'utf8');
-        const lines = content.split('\n').filter(l => l.trim().length > 0).slice(1);
+        const rows = parseCSV(content).slice(1);
 
         const pTopics = new Map<string, string>(); // ID -> Title
         const pSegments: any[] = [];
 
-        for (const line of lines) {
-            const cols = parseCSVLine(line);
+        for (const cols of rows) {
             // Cols: PartID, StoryTopicID, TextID, StoryTitle, Order, StoryText
             if (cols.length < 6) continue;
 
@@ -343,6 +366,85 @@ async function populatePartB(connection: mysql.Connection) {
     await connection.query("SET FOREIGN_KEY_CHECKS = 1");
 }
 
+async function populatePartC(connection: mysql.Connection) {
+    console.log('Populating Part C data...');
+    await connection.query("SET FOREIGN_KEY_CHECKS = 0");
+
+    // Helper to read CSV and insert data
+    const seedTable = async (fileName: string, tableName: string, columns: string[], mapFn?: (cols: string[]) => any[]) => {
+        const filePath = path.resolve(process.cwd(), `docs/Study Material/${fileName}`);
+        if (fs.existsSync(filePath)) {
+            console.log(`Reading ${filePath}...`);
+            const content = fs.readFileSync(filePath, 'utf8');
+            const rows = parseCSV(content).slice(1); // Skip header
+
+            if (rows.length > 0) {
+                await connection.query(`TRUNCATE TABLE ${tableName}`);
+
+                // Prepare statement placeholders
+                const placeholders = columns.map(() => '?').join(', ');
+                const sql = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${placeholders})`;
+
+                for (const cols of rows) {
+                    if (cols.length < columns.length) continue;
+
+                    let values = cols;
+                    if (mapFn) values = mapFn(cols);
+
+                    // Ensure we only take the number of columns we expect
+                    values = values.slice(0, columns.length);
+
+                    try {
+                        await connection.execute(sql, values);
+                    } catch (err) {
+                        console.error(`Error inserting into ${tableName}:`, err);
+                    }
+                }
+                console.log(`Inserted ${rows.length} rows into ${tableName}.`);
+            }
+        } else {
+            console.warn(`File not found: ${filePath}`);
+        }
+    };
+
+    // 1. Part C Topic
+    await seedTable('part_c_topic.csv', 'part_c_topic',
+        ['topID', 'topTitle', 'topIdeasBonusWords']
+    );
+
+    // 2. Part C Subtopic
+    await seedTable('part_c_subtopic.csv', 'part_c_subtopic',
+        ['subtopID', 'topID', 'subtopTitle']
+    );
+
+    // 3. Part C Passage
+    await seedTable('part_c_passage.csv', 'part_c_passage',
+        ['topID', 'subtopID', 'conID', 'passID', 'passOrder', 'passTitle', 'passText']
+    );
+
+    // 4. Part C Questions
+    await seedTable('part_c_questions.csv', 'part_c_questions',
+        ['questionID', 'passID', 'topID', 'subtopID', 'conID', 'passOrder', 'passTitle', 'questionText', 'choiceA', 'choiceB', 'choiceC', 'choiceD', 'correctAns']
+    );
+
+    // 5. Part C Practice Topic
+    await seedTable('part_c_prac_topic.csv', 'part_c_prac_topic',
+        ['topID', 'topTitle', 'topIdeasBonusWords']
+    );
+
+    // 6. Part C Practice Subtopic
+    await seedTable('part_c_prac_subtopic.csv', 'part_c_prac_subtopic',
+        ['subtopID', 'topID', 'subtopTitle']
+    );
+
+    // 7. Part C Practice Passage
+    await seedTable('part_c_prac_passage.csv', 'part_c_prac_passage',
+        ['topID', 'subtopID', 'conID', 'passID', 'passOrder', 'passTitle', 'passText']
+    );
+
+    await connection.query("SET FOREIGN_KEY_CHECKS = 1");
+}
+
 async function main() {
     console.log('Connecting to database...');
 
@@ -369,6 +471,7 @@ async function main() {
         console.log('Schema migration completed.');
         await populatePartA(connection);
         await populatePartB(connection);
+        await populatePartC(connection);
 
         console.log('Verification completed.');
 
