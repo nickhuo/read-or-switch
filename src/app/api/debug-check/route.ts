@@ -5,12 +5,10 @@ import { RowDataPacket } from "mysql2";
 
 export async function GET() {
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(
-            "SELECT id, set_id, sentence_index, content FROM part_a_sentences ORDER BY set_id, sentence_index"
-        );
+        const [rows] = await pool.query<RowDataPacket[]>("SHOW TABLES");
         return NextResponse.json(rows);
     } catch (error: unknown) {
         console.error("Database error:", error);
-        return NextResponse.json({ error: "Failed to fetch sentences" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to list tables" }, { status: 500 });
     }
 }

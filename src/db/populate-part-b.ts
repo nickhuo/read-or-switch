@@ -35,8 +35,8 @@ async function main() {
         // 1. Drop existing tables to ensure clean schema update
         console.log('Dropping existing Part 2 tables to ensure schema update...');
         const tablesToDrop = [
-            'part2_practice_responses', 'part2_practice_questions', 'part2_practice_actions', 'part2_practice_segments', 'part2_practice_stories', 'part2_practice_summaries',
-            'part2_formal_responses', 'part2_formal_questions', 'part2_formal_actions', 'part2_formal_segments', 'part2_formal_stories', 'part2_formal_summaries',
+            'part_b_practice_responses', 'part_b_practice_questions', 'part_b_practice_actions', 'part_b_practice_segments', 'part_b_practice_stories', 'part_b_practice_summaries',
+            'part_b_formal_responses', 'part_b_formal_questions', 'part_b_formal_actions', 'part_b_formal_segments', 'part_b_formal_stories', 'part_b_formal_summaries',
             // Also drop old tables if they linger
             'part2_responses', 'part2_questions', 'part2_actions', 'part2_segments', 'part2_stories', 'part2_summaries'
         ];
@@ -85,8 +85,8 @@ async function main() {
         // Helper to insert stories and segments
         async function insertRecords(records: any[], phase: 'practice' | 'formal') {
             const suffix = phase;
-            const storyTable = `part2_${suffix}_stories`;
-            const segmentTable = `part2_${suffix}_segments`;
+            const storyTable = `part_b_${suffix}_stories`;
+            const segmentTable = `part_b_${suffix}_segments`;
 
             // Group by StoryTitle
             const storiesMap = new Map<string, any[]>();
@@ -151,7 +151,7 @@ async function main() {
                 }
 
                 const { id: storyId, phase } = storyInfo;
-                const questionsTable = `part2_${phase}_questions`;
+                const questionsTable = `part_b_${phase}_questions`;
 
                 const questionText = row.Questions;
                 const order = row.Order ? parseInt(row.Order, 10) : 0;

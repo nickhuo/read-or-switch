@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
         // 1. Save Summary
         if (summary) {
-            const table = phase === 'practice' ? 'part3_practice_summaries' : 'part3_formal_summaries';
+            const table = phase === 'practice' ? 'part_c_practice_summaries' : 'part_c_formal_summaries';
             // We expect extra fields for Part C summaries: story_id, segment_order.
             // But this route is shared with Part B? Part B submit doesn't send segment_order/story_id for summary?
             // Part B refactor kept Part B separate in /api/part-b/submit.
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
         // 2. Save Responses
         if (responses && Array.isArray(responses)) {
-            const table = phase === 'practice' ? 'part3_practice_responses' : 'part3_formal_responses';
+            const table = phase === 'practice' ? 'part_c_practice_responses' : 'part_c_formal_responses';
             for (const r of responses) {
                 // Responses for ratings (question_id linked).
                 // Value is stored in response_option? Yes. 0-100 fits in INT.

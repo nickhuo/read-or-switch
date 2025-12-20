@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         // Batch insert might be better, but simple loop is fine for small N
         for (const r of responses) {
             await query(
-                `INSERT INTO part3_letter_comparison_responses 
+                `INSERT INTO part_c_letter_item 
                 (participant_id, problem_id, response_same, is_correct, reaction_time_ms) 
                 VALUES (?, ?, ?, ?, ?)`,
                 [participantId, r.problemId, r.response === 'S', r.isCorrect, r.reactionTimeMs]

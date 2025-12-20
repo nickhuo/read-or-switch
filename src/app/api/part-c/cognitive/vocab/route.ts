@@ -19,7 +19,7 @@ export async function POST(request: Request) {
             const optionNum = parseInt(r.responseVal.split(' - ')[0]);
 
             await query(
-                `INSERT INTO part3_vocabulary_responses 
+                `INSERT INTO part_c_vocabulary_responses 
                 (participant_id, question_id, response_option, is_correct, reaction_time_ms) 
                 VALUES (?, ?, ?, ?, ?)`,
                 [participantId, r.questionId, optionNum, r.isCorrect, r.reactionTimeMs]

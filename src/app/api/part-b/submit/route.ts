@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
         // 1. Save Summary
         if (summary) {
-            const table = phase === 'practice' ? 'part2_practice_summaries' : 'part2_formal_summaries';
+            const table = phase === 'practice' ? 'part_b_practice_summaries' : 'part_b_formal_summaries';
             await query(
                 `INSERT INTO ${table} (participant_id, content) VALUES (?, ?)`,
                 [participantId, summary]
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
         // 2. Save Responses
         if (responses && Array.isArray(responses)) {
-            const table = phase === 'practice' ? 'part2_practice_responses' : 'part2_formal_responses';
+            const table = phase === 'practice' ? 'part_b_practice_responses' : 'part_b_formal_responses';
             for (const r of responses) {
                 await query(
                     `INSERT INTO ${table} (participant_id, question_id, response_option, is_correct, reaction_time_ms) VALUES (?, ?, ?, ?, ?)`,

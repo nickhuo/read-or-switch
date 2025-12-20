@@ -232,7 +232,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                         onClick={() => triggerQuestion("switch")}
                         className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
                     >
-                        Go To Other Topic
+                        Go To Other Topics
                     </button>
                     <button
                         onClick={() => triggerQuestion("continue")}

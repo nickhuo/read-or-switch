@@ -32,14 +32,16 @@ async function main() {
 
     try {
         const tablesToClear = [
-            'part3_practice_responses', 'part3_practice_questions', 'part3_practice_actions', 'part3_practice_segments', 'part3_practice_stories', 'part3_practice_summaries',
-            'part3_formal_responses', 'part3_formal_questions', 'part3_formal_actions', 'part3_formal_segments', 'part3_formal_stories', 'part3_formal_summaries',
-            // Legacy Part B tables to drop
-            'part4_comprehension_responses', 'comprehension_questions',
-            'story_responses', 'participant_actions', 'story_segments', 'stories'
+            'part_c_pass_qop', 'part_c_passage', 'part_c_subtopic', 'part_c_topic',
+            'part_c_prac_pass_qop', 'part_c_prac_passage', 'part_c_prac_subtopic', 'part_c_prac_topic',
+            // Legacy/Extra tables
+            'part_c_practice_summaries', 'part_c_formal_summaries',
+            'part_c_practice_responses', 'part_c_formal_responses',
+            'part_c_vocabulary_responses', 'part_c_letter_item',
+            'part_c_questions'
         ];
 
-        console.log('Dropping existing Part 3 tables to ensure schema updates...');
+        console.log('Dropping existing Part C tables to ensure schema updates...');
         await connection.query('SET FOREIGN_KEY_CHECKS = 0');
         for (const table of tablesToClear) {
             try {
@@ -60,6 +62,7 @@ async function main() {
         await connection.query(schemaSql);
         console.log('Schema applied.');
 
+        // Re-truncate just in case
         await connection.query('SET FOREIGN_KEY_CHECKS = 0');
         for (const table of tablesToClear) {
             try {
@@ -72,56 +75,84 @@ async function main() {
         await connection.query('SET FOREIGN_KEY_CHECKS = 1');
 
         async function insertMockData(phase: 'practice' | 'formal', numStories: number) {
-            console.log(`Inserting Part 3 ${phase} mock data...`);
-            const suffix = phase;
+            console.log(`Inserting Part C ${phase} mock data...`);
+
+            // Map to new schema tables
+            // formal -> part_c_topic, part_c_passage
+            // practice -> part_c_prac_topic, part_c_prac_passage
+
+            const topicTable = phase === 'practice' ? 'part_c_prac_topic' : 'part_c_topic';
+            const passageTable = phase === 'practice' ? 'part_c_prac_passage' : 'part_c_passage';
 
             for (let i = 1; i <= numStories; i++) {
-                // Insert Story
+                // Insert Topic (Story)
+                // Schema: topID, topTitle, topIdeasBonusWords
                 const title = `Part C ${phase} Story ${i}`;
-                const topicId = `TC${phase.charAt(0).toUpperCase()}${i}`; // TCP1, TCF1
+                const topID = `TC${phase.charAt(0).toUpperCase()}${i}`; // TCP1, TCF1
 
-                const [res]: any = await connection.execute(
-                    `INSERT INTO part3_${suffix}_stories (title, story_topic_id) VALUES (?, ?)`,
-                    [title, topicId]
+                await connection.execute(
+                    `INSERT INTO ${topicTable} (topID, topTitle, topIdeasBonusWords) VALUES (?, ?, ?)`,
+                    [topID, title, '']
                 );
-                const storyId = res.insertId;
+                console.log(`Inserted Topic: ${title} (${topID})`);
 
-                // Insert Segments (let's say 4 segments per story)
-                // And for each segment, we need a corresponding QUESTION (since user wants per-segment questions)
+                // Insert Passages (Segments)
+                // Schema: topID, subtopID, conID, passID, passOrder, passTitle, passText
                 for (let s = 1; s <= 4; s++) {
                     const content = `This is content for segment ${s} of ${title}. It contains some information that will be tested.`;
+                    const subtopID = `${topID}-ST${s}`;
+                    const conID = 'CON01';
+                    const passID = `${topID}-P${s}`; // char(6)? Might be too long if not careful. schema says char(6). 
+                    // TCP1-P1 is 7 chars. schema definition: `passID` char(6) NOT NULL. 
+                    // I'll adjust passID to be short. P1, P2? passID isn't unique globally? 
+                    // PK is (topID, subtopID, conID, passID).
+                    // Let's use P0${s} (3 chars).
+                    const shortPassID = `P0${s}`;
 
                     await connection.execute(
-                        `INSERT INTO part3_${suffix}_segments 
-                        (story_id, content, segment_order, text_id, predictability, predict_id) 
-                        VALUES (?, ?, ?, ?, ?, ?)`,
-                        [storyId, content, s, `${topicId}-S${s}`, 'High', 1]
+                        `INSERT INTO ${passageTable} 
+                        (topID, subtopID, conID, passID, passOrder, passTitle, passText) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [topID, subtopID, conID, shortPassID, s.toString(), `Segment ${s}`, content]
                     );
 
-                    // Insert 4 Fixed Rating Questions for this segment
+                    // Insert Questions? part_c_questions (Schema: questionID, passID, topID ...)
+                    // Note: API questions route joins with questions table looking for story_id? NO, I removed that join in loop.
+                    // But in Step 90 I removed the join logic in questions route?
+                    // Checked Step 90: `SELECT q.*, s.title as story_title FROM part_c_questions q JOIN part_c_topic s ON ...`
+                    // Wait, Step 90 was replace_file_content... 
+                    // "const questionsTable = 'part_c_questions';"
+                    // "const storiesTable = phase === 'practice' ? 'part_c_prac_topic' : 'part_c_topic';"
+                    // The join logic `q.story_id = s.id` is likely invalid because `part_c_questions` doesn't have `story_id`.
+                    // It has `topID`. `part_c_topic` has `topID`.
+                    // So join should be `q.topID = s.topID`.
+                    // And `part_c_questions` needs data.
+
                     const ratingQuestions = [
-                        "Compared to the other articles that you have read today, how much new information was in this article?",
-                        "How easy was this article to read?",
-                        "How much did you learn from this article?",
-                        "How much did you learn overall from the articles you have read so far today (including this article)?"
+                        "How much new information?",
+                        "How easy to read?",
+                        "How much learned?",
+                        "Overall learning?"
                     ];
 
                     for (let qIdx = 0; qIdx < 4; qIdx++) {
-                        const globalOrder = (s - 1) * 4 + (qIdx + 1); // 1-based order: 1,2,3,4 for seg1; 5,6,7,8 for seg2...
+                        const qID = `${topID}-Q${s}-${qIdx}`;
 
+                        // Schema: questionID, passID, topID, subtopID, conID, passOrder, passTitle, questionText, choiceA..D, correctAns
                         await connection.execute(
-                            `INSERT INTO part3_${suffix}_questions 
-                            (story_id, question_text, question_order, option_1, option_2, option_3, option_4, correct_option) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                            `INSERT INTO part_c_questions 
+                            (questionID, passID, topID, subtopID, conID, passOrder, passTitle, questionText, choiceA, choiceB, choiceC, choiceD, correctAns) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                             [
-                                storyId,
+                                qID,
+                                shortPassID,
+                                topID,
+                                subtopID,
+                                conID,
+                                s.toString(),
+                                `Segment ${s}`,
                                 ratingQuestions[qIdx],
-                                globalOrder,
-                                "Min: 0",
-                                "Max: 100",
-                                "",
-                                "",
-                                1
+                                "0", "100", "", "", "1"
                             ]
                         );
                     }

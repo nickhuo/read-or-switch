@@ -273,7 +273,7 @@ function PartAContent() {
                     {readingPhase === "decision" && (
                         <div className="max-w-3xl w-full flex justify-between items-center px-4 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
                             <button onClick={handleSwitch} className={outlineBtn}>
-                                Go To Other Topic
+                                Go To Other Topics
                             </button>
                             <button onClick={handleContinue} className={primaryBtn}>
                                 Continue Reading

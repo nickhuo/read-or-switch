@@ -10,8 +10,8 @@ export async function GET(request: Request) {
     }
 
     try {
-        const questionsTable = phase === 'practice' ? 'part3_practice_questions' : 'part3_formal_questions';
-        const storiesTable = phase === 'practice' ? 'part3_practice_stories' : 'part3_formal_stories';
+        const questionsTable = 'part_c_questions'; // Unified table for now
+        const storiesTable = phase === 'practice' ? 'part_c_prac_topic' : 'part_c_topic';
 
         const questions = await query(
             `SELECT q.*, s.title as story_title 

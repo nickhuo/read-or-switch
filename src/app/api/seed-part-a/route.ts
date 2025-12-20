@@ -41,10 +41,10 @@ export async function GET() {
 
             // Re-create table to ensure schema matches (since we can't easily run schema.sql from here without raw query)
             // This is a dev-helper route, so dropping is acceptable for initial setup.
-            await connection.execute("DROP TABLE IF EXISTS sentences");
+            await connection.execute("DROP TABLE IF EXISTS part_a_sentences");
 
             await connection.execute(`
-                CREATE TABLE sentences (
+                CREATE TABLE part_a_sentences (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     study_part_id INT,
                     set_id INT NOT NULL,
@@ -65,7 +65,7 @@ export async function GET() {
             `);
 
             const insertQuery = `
-                INSERT INTO sentences (
+                INSERT INTO part_a_sentences (
                     study_part_id, set_id, text_id, sentence_index, sp1_con_id, 
                     predictability, predict_id, make_sense, make_sense_id, 
                     text_type, text_type_id, gen_type, gen_type_id, note, content

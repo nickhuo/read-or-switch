@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         const condition = participants[0].part2_condition;
 
         // 2. Fetch Segments filtered by condition
-        const segmentsTable = phase === 'practice' ? 'part2_practice_segments' : 'part2_formal_segments';
+        const segmentsTable = phase === 'practice' ? 'part_b_practice_segments' : 'part_b_formal_segments';
 
         let querySql = `SELECT * FROM ${segmentsTable} WHERE story_id = ? ORDER BY segment_order ASC`;
         let queryParams = [storyId];

@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         const connection = await pool.getConnection();
         try {
             await connection.execute(
-                `INSERT INTO participant_summaries (participant_id, group_id, content) 
+                `INSERT INTO part_a_summaries (participant_id, group_id, content) 
                  VALUES (?, ?, ?)`,
                 [participantId, groupId || 1, content]
             );

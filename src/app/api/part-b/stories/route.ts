@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     }
 
     try {
-        const tableName = phase === 'practice' ? 'part2_practice_stories' : 'part2_formal_stories';
+        const tableName = phase === 'practice' ? 'part_b_practice_stories' : 'part_b_formal_stories';
         const stories = await query(
             `SELECT * FROM ${tableName}`
         );
