@@ -16,14 +16,15 @@ export async function POST(request: Request) {
         const connection = await pool.getConnection();
         try {
             await connection.execute(
-                `INSERT INTO part_a_logs (participant_id, set_id, sentence_index, word_index, action_type) 
-                 VALUES (?, ?, ?, ?, ?)`,
+                `INSERT INTO part_a_logs (participant_id, set_id, sentence_index, word_index, action_type, timestamp) 
+                 VALUES (?, ?, ?, ?, ?, ?)`,
                 [
                     participantId,
                     setId,
                     sentenceIndex,
                     wordIndex !== undefined ? wordIndex : null,
-                    action || 'word_reveal'
+                    action || 'word_reveal',
+                    new Date().toISOString().slice(0, 23).replace('T', ' ') // Format: YYYY-MM-DD HH:mm:ss.ms
                 ]
             );
             return NextResponse.json({ success: true });
