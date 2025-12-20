@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS participants (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     part2_condition INT COMMENT '0 or 1',
     part3_condition INT COMMENT '0, 1, or 2',
-    email VARCHAR(255) NOT NULL,
-    consent BOOLEAN NOT NULL
+    email VARCHAR(255) NOT NULL DEFAULT 'testing@illionis.edu',
+    consent BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 DROP TABLE IF EXISTS demographics;
@@ -118,12 +118,6 @@ CREATE TABLE IF NOT EXISTS part_a_logs (
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
 );
 
--- Seed Part A Questions (Mock)
-INSERT IGNORE INTO part_a_questions (question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
-('What was the main theme of the sentences about the fox?', 'Laziness', 'Speed', 'Agility', 'Colors', 3),
-('Which object was mentioned as being watched?', 'Clock', 'Pot', 'Television', 'Bird', 2),
-('Who picked the pickled peppers?', 'Paul', 'Peter', 'Patrick', 'Phil', 2),
-('What did she sell by the seashore?', 'Seaweed', 'Sandcastles', 'Seashells', 'Surfboards', 3);
 
 -- Part B: Story Reading & Comprehension
 -- ==========================================
