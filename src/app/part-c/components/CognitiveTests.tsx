@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ChangeEvent, MouseEvent } from "react";
 
 interface CognitiveTestsProps {
@@ -29,47 +29,51 @@ interface VocabResponseData {
     reactionTimeMs: number;
 }
 
-// Mock Data matching the user's images somewhat
-const letterProblems = [
-    { id: 1, s1: "PRDBZTYFN", s2: "PRDBZTYFN", same: true },
-    { id: 2, s1: "NCWJDZ", s2: "NCMJDZ", same: false },
-    { id: 3, s1: "KHW", s2: "KBW", same: false },
-    { id: 4, s1: "ZRBGMF", s2: "ZRBCMF", same: false },
-    { id: 5, s1: "BTH", s2: "BYH", same: false },
-    { id: 6, s1: "XWKQRYCNZ", s2: "XWKQRYCNZ", same: true },
-    { id: 7, s1: "HNPDLK", s2: "HNPDLK", same: true },
-    { id: 8, s1: "WMQTRSGLZ", s2: "WMQTRZGLZ", same: false },
-    { id: 9, s1: "JPN", s2: "JPN", same: true },
-    { id: 10, s1: "QLXSVT", s2: "QLNSVT", same: false },
-];
 
-const vocabQuestions: VocabQuestion[] = [
-    {
-        id: 1, word: "mumble",
-        options: ["1 - speak indistinctly", "2 - complain", "3 - handle awkwardly", "4 - fall over something", "5 - tear apart", "6 - Not sure about the answer"],
-        correctOption: 1,
-    },
-    {
-        id: 2, word: "perspire",
-        options: ["1 - struggle", "2 - sweat", "3 - happen", "4 - penetrate", "5 - submit", "6 - Not sure about the answer"],
-        correctOption: 2,
-    },
-    {
-        id: 3, word: "gush",
-        options: ["1 - giggle", "2 - spout", "3 - sprinkle", "4 - hurry", "5 - cry", "6 - Not sure about the answer"],
-        correctOption: 2,
-    },
-];
+// New data structure for multiple rounds
+const LETTER_COMPARISON_ROUNDS: Record<number, Array<{ left: string; right: string; answer: "S" | "D" }>> = {
+    1: [
+        { "left": "PRDBZTYFN", "right": "PRDBZTYFN", "answer": "S" },
+        { "left": "NCWJDZ", "right": "NCMJDZ", "answer": "D" },
+        { "left": "KHW", "right": "KBW", "answer": "D" },
+        { "left": "ZRBGMF", "right": "ZRBCMF", "answer": "D" },
+        { "left": "BTH", "right": "BYH", "answer": "D" },
+        { "left": "XWKQRYCNZ", "right": "XWKQRYCNZ", "answer": "S" },
+        { "left": "HNPDLK", "right": "HNPDLK", "answer": "S" },
+        { "left": "WMQTRSGLZ", "right": "WMQTRZGLZ", "answer": "D" },
+        { "left": "JPN", "right": "JPN", "answer": "S" },
+        { "left": "QLXSVT", "right": "QLNSVT", "answer": "D" },
+    ],
+    2: [
+        { "left": "YXHKZVFPB", "right": "YXHKZVFPD", "answer": "D" },
+        { "left": "RJZ", "right": "RJZ", "answer": "S" },
+        { "left": "CLNPZD", "right": "CLNPZD", "answer": "S" },
+        { "left": "DCBPFHXYJ", "right": "DCBPFHXYJ", "answer": "S" },
+        { "left": "MWR", "right": "ZWR", "answer": "D" },
+        { "left": "LPKXZW", "right": "LPKXZW", "answer": "S" },
+        { "left": "TZL", "right": "TZQ", "answer": "D" },
+        { "left": "CSDBFPHXZ", "right": "CSDBFPHXZ", "answer": "S" },
+        { "left": "QHZXPC", "right": "QHZWPC", "answer": "D" },
+        { "left": "JNWXHPFBD", "right": "JNWXHPFMD", "answer": "D" },
+    ],
+};
+
+
+// Fetched dynamically
+// const vocabQuestions: VocabQuestion[] = [...]; 
+
 
 export default function CognitiveTests({ participantId, onComplete }: CognitiveTestsProps) {
     const [subPhase, setSubPhase] = useState<"intro" | "letter" | "vocab">("intro");
 
     // Letter Test State
-    const [letterResponses, setLetterResponses] = useState<Record<number, string>>({}); // 'S' or 'D'
-    const [letterData, setLetterData] = useState<LetterResponseData[]>([]); // To store timing and correctness
+    const [currentRound, setCurrentRound] = useState<number>(1);
+    const [letterResponses, setLetterResponses] = useState<Record<number, string>>({}); // Keyed by absolute ID (1-20)
+    const [letterData, setLetterData] = useState<LetterResponseData[]>([]);
     const [startTime, setStartTime] = useState<number>(0);
 
     // Vocab Test State
+    const [vocabQuestions, setVocabQuestions] = useState<VocabQuestion[]>([]);
     const [vocabResponses, setVocabResponses] = useState<Record<number, string>>({});
     const [vocabData, setVocabData] = useState<VocabResponseData[]>([]);
 
@@ -79,26 +83,32 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
         setStartTime(event.timeStamp);
     };
 
-    const handleLetterResponse = (event: MouseEvent<HTMLButtonElement>, id: number, val: "S" | "D") => {
+    // Fetch vocab questions when subPhase changes to vocab
+    // Or pre-fetch. Let's fetch when entering vocab phase or on mount (if we want them ready).
+    // Better to fetch when entering vocab phase to ensure latest.
+    const fetchVocabQuestions = async () => {
+        try {
+            const res = await fetch("/api/part-c/cognitive/vocab");
+            const data = await res.json();
+            if (data.questions) {
+                setVocabQuestions(data.questions);
+            }
+        } catch (e) {
+            console.error("Failed to fetch vocab questions", e);
+        }
+    };
+
+    const handleLetterResponse = (event: MouseEvent<HTMLButtonElement>, absoluteId: number, val: "S" | "D", problem: { left: string, right: string, answer: "S" | "D" }) => {
         const reactionTime = startTime ? event.timeStamp - startTime : 0;
 
-        // Note: This simple overlapping RT tracking is imperfect if they change answers,
-        // but sufficient for this prototype level.
-        // Ideally we track time from 'render' to 'first click' for that specific item,
-        // but all items are on one page. So we just track time from *start of page*.
-        // OR we track time from last click?
-        // Let's assume RT is time from Page Load to Click.
-
-        setLetterResponses(prev => ({ ...prev, [id]: val }));
+        setLetterResponses(prev => ({ ...prev, [absoluteId]: val }));
 
         setLetterData(prev => {
-            // Remove existing if changing answer
-            const filtered = prev.filter(p => p.problemId !== id);
-            const prob = letterProblems.find(p => p.id === id);
-            const isCorrect = prob ? (val === (prob.same ? 'S' : 'D')) : false;
+            const filtered = prev.filter(p => p.problemId !== absoluteId);
+            const isCorrect = (val === problem.answer);
 
             return [...filtered, {
-                problemId: id,
+                problemId: absoluteId,
                 response: val,
                 isCorrect,
                 reactionTimeMs: reactionTime
@@ -108,18 +118,30 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     const handleLetterSubmit = async (event: MouseEvent<HTMLButtonElement>) => {
         const eventTimestamp = event.timeStamp;
-        try {
-            await fetch("/api/part-c/cognitive/letter", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ participantId, responses: letterData })
-            });
 
-            setSubPhase("vocab");
-            setStartTime(eventTimestamp);
-        } catch (e) {
-            console.error(e);
-            alert("Failed to save letter data");
+        const totalRounds = Object.keys(LETTER_COMPARISON_ROUNDS).length;
+
+        if (currentRound < totalRounds) {
+            // Move to next round
+            setCurrentRound(prev => prev + 1);
+            setStartTime(eventTimestamp); // Reset timer for next round
+            window.scrollTo(0, 0); // Scroll to top for new round
+        } else {
+            // Submit all data and move to Vocab
+            try {
+                await fetch("/api/part-c/cognitive/letter", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ participantId, responses: letterData })
+                });
+
+                setSubPhase("vocab");
+                setStartTime(eventTimestamp);
+                fetchVocabQuestions();
+            } catch (e) {
+                console.error(e);
+                alert("Failed to save letter data");
+            }
         }
     };
 
@@ -130,13 +152,8 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
         setVocabData(prev => {
             const filtered = prev.filter(p => p.questionId !== id);
-            // Check correctness logic (mock for now, need simpler logic for 1-5 opt)
-            // Extract number from option string "1 - ..."
             const selectedNum = Number.parseInt(val.split(" - ")[0], 10);
             const q = vocabQuestions.find(v => v.id === id);
-            // In mock data: option_1 is array index 0.
-            // In table: correct_option is 1-based index? In schema I made it 1-5.
-            // Let's assume options are 1-based.
             const isCorrect = q ? (selectedNum === q.correctOption) : false;
 
             return [...filtered, {
@@ -184,43 +201,51 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
     }
 
     if (subPhase === "letter") {
+        const currentProblems = LETTER_COMPARISON_ROUNDS[currentRound] || [];
+        // Calculate offset for absolute ID: (round - 1) * 10
+        // Assumes 10 items per round as per spec
+        const idOffset = (currentRound - 1) * 10;
+
         return (
             <div className="max-w-5xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 border border-[var(--border)]">
                 <div className="text-center mb-10">
-                    <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-2">Letter Comparison Round 1</h2>
+                    <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-2">Letter Comparison Round {currentRound}</h2>
                     <p className="text-[var(--muted)] font-medium">Please compare the strings as fast as you can.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                    {letterProblems.map((prob, idx) => (
-                        <div key={prob.id} className="flex items-center justify-between border border-[var(--border)] rounded-lg p-5 bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
-                            <div className="flex items-center gap-4 flex-1">
-                                <span className="font-mono text-[var(--muted)] text-sm w-6">{idx + 1}.</span>
-                                <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.s1}</span>
-                            </div>
+                    {currentProblems.map((prob, idx) => {
+                        const absoluteId = idOffset + idx + 1;
+                        return (
+                            <div key={absoluteId} className="flex items-center justify-between border border-[var(--border)] rounded-lg p-5 bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
+                                <div className="flex items-center gap-4 flex-1">
+                                    <span className="font-mono text-[var(--muted)] text-sm w-6">{absoluteId}.</span>
+                                    <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.left}</span>
+                                </div>
 
-                            <div className="flex gap-3 mx-4">
-                                <button
-                                    onClick={(event) => handleLetterResponse(event, prob.id, "S")}
-                                    className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[prob.id] === "S"
-                                        ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
-                                        : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
-                                        }`}
-                                >S</button>
-                                <button
-                                    onClick={(event) => handleLetterResponse(event, prob.id, "D")}
-                                    className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[prob.id] === "D"
-                                        ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
-                                        : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
-                                        }`}
-                                >D</button>
-                            </div>
+                                <div className="flex gap-3 mx-4">
+                                    <button
+                                        onClick={(event) => handleLetterResponse(event, absoluteId, "S", prob)}
+                                        className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[absoluteId] === "S"
+                                            ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
+                                            : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
+                                            }`}
+                                    >S</button>
+                                    <button
+                                        onClick={(event) => handleLetterResponse(event, absoluteId, "D", prob)}
+                                        className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[absoluteId] === "D"
+                                            ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
+                                            : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
+                                            }`}
+                                    >D</button>
+                                </div>
 
-                            <div className="flex-1 text-right">
-                                <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.s2}</span>
+                                <div className="flex-1 text-right">
+                                    <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.right}</span>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <div className="text-center mt-12">
@@ -228,10 +253,11 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                         onClick={handleLetterSubmit}
                         className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring flex items-center justify-center gap-2 mx-auto"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Done
+                        {currentRound < Object.keys(LETTER_COMPARISON_ROUNDS).length ? (
+                            <>Next Round <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></>
+                        ) : (
+                            <>Done <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg></>
+                        )}
                     </button>
                 </div>
             </div>

@@ -165,6 +165,15 @@ CREATE TABLE IF NOT EXISTS part_b_practice_actions (
     FOREIGN KEY (segment_id) REFERENCES part_b_practice_segments(id)
 );
 
+DROP TABLE IF EXISTS part_b_practice_summaries;
+CREATE TABLE IF NOT EXISTS part_b_practice_summaries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    content TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+);
+
 DROP TABLE IF EXISTS part_b_practice_questions;
 CREATE TABLE IF NOT EXISTS part_b_practice_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -311,7 +320,7 @@ CREATE TABLE `part_c_passage` (
 DROP TABLE IF EXISTS `part_c_pass_qop`;
 CREATE TABLE `part_c_pass_qop` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
+    `uid` BIGINT NOT NULL,
     `sid` varchar(100) NOT NULL,
     `topID` varchar(8) NOT NULL,
     `subtopID` varchar(8) NOT NULL,
@@ -330,7 +339,7 @@ CREATE TABLE `part_c_pass_qop` (
 DROP TABLE IF EXISTS `part_c_task_time`;
 CREATE TABLE `part_c_task_time` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
+    `uid` BIGINT NOT NULL,
     `sid` varchar(100) NOT NULL,
     `topID` varchar(8) NOT NULL,
     `timeStart` int(10) NOT NULL,
@@ -344,7 +353,7 @@ CREATE TABLE `part_c_task_time` (
 DROP TABLE IF EXISTS `part_c_subtop_qos`;
 CREATE TABLE `part_c_subtop_qos` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
+    `uid` BIGINT NOT NULL,
     `sid` varchar(100) NOT NULL,
     `topID` varchar(8) NOT NULL,
     `subtopID` varchar(8) NOT NULL,
@@ -392,7 +401,7 @@ CREATE TABLE `part_c_prac_passage` (
 DROP TABLE IF EXISTS `part_c_prac_pass_qop`;
 CREATE TABLE `part_c_prac_pass_qop` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
+    `uid` BIGINT NOT NULL,
     `sid` varchar(100) NOT NULL,
     `topID` varchar(8) NOT NULL,
     `subtopID` varchar(8) NOT NULL,
@@ -411,7 +420,7 @@ CREATE TABLE `part_c_prac_pass_qop` (
 DROP TABLE IF EXISTS `part_c_prac_task_time`;
 CREATE TABLE `part_c_prac_task_time` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
+    `uid` BIGINT NOT NULL,
     `sid` varchar(100) NOT NULL,
     `topID` varchar(8) NOT NULL,
     `timeStart` int(10) NOT NULL,
@@ -444,7 +453,7 @@ CREATE TABLE `part_c_questions` (
 DROP TABLE IF EXISTS `part_c_multi_qop`;
 CREATE TABLE `part_c_multi_qop` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
+    `uid` BIGINT NOT NULL,
     `sid` varchar(100) NOT NULL,
     `questionID` varchar(8) NOT NULL,
     `topID` varchar(8) NOT NULL,
@@ -461,7 +470,7 @@ CREATE TABLE `part_c_multi_qop` (
 DROP TABLE IF EXISTS `part_c_letter_item`;
 CREATE TABLE `part_c_letter_item` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
+    `participant_id` BIGINT NOT NULL,
     `sid` varchar(100) NOT NULL,
     `round_number` tinyint NOT NULL,
     `item_index` tinyint NOT NULL,
@@ -473,7 +482,22 @@ CREATE TABLE `part_c_letter_item` (
     `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uq_letter_item` (`uid`, `sid`, `round_number`, `item_index`)
+    UNIQUE KEY `uq_letter_item` (`participant_id`, `sid`, `round_number`, `item_index`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- part_c_vocabulary_questions
+DROP TABLE IF EXISTS `part_c_vocabulary_questions`;
+CREATE TABLE `part_c_vocabulary_questions` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `word` varchar(255) NOT NULL,
+    `option_1` varchar(255) NOT NULL,
+    `option_2` varchar(255) NOT NULL,
+    `option_3` varchar(255) NOT NULL,
+    `option_4` varchar(255) NOT NULL,
+    `option_5` varchar(255) NOT NULL,
+    `option_6` varchar(255) NOT NULL DEFAULT 'Not sure about the answer',
+    `correct_option` int(11) NOT NULL,
+    PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- part_c_vocabulary_responses

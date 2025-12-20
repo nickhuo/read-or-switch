@@ -9,14 +9,24 @@ interface FormalTaskProps {
     onComplete: () => void;
 }
 
-type ViewState = "instructions" | "story-selection" | "reading" | "question";
+// ... types
+interface Subtopic {
+    id: string;
+    title: string;
+    topic_id: string;
+}
+
+type ViewState = "instructions" | "subtopic-selection" | "reading" | "question";
 
 export default function FormalTask({ participantId, onComplete }: FormalTaskProps) {
-    const [stories, setStories] = useState<Story[]>([]);
-    const [visitedStoryIds, setVisitedStoryIds] = useState<Set<number>>(new Set());
+    // const [stories, setStories] = useState<Story[]>([]); // Removed
+    const [visitedSubtopicIds, setVisitedSubtopicIds] = useState<Set<string>>(new Set());
 
     const [view, setView] = useState<ViewState>("instructions");
-    const [currentStory, setCurrentStory] = useState<Story | null>(null);
+    // const [currentStory, setCurrentStory] = useState<Story | null>(null); // Topic concept removed from UI
+    const [subtopics, setSubtopics] = useState<Subtopic[]>([]);
+    const [currentSubtopic, setCurrentSubtopic] = useState<Subtopic | null>(null);
+    const [readingStartTime, setReadingStartTime] = useState<number>(0);
     const [segments, setSegments] = useState<Segment[]>([]);
     const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
 
@@ -29,10 +39,11 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        fetch("/api/part-c/stories?phase=formal")
+        // Fetch all subtopics directly
+        fetch("/api/part-c/subtopics?phase=formal")
             .then(res => res.json())
-            .then(data => setStories(data))
-            .catch(err => console.error("Failed to fetch stories", err));
+            .then(data => setSubtopics(data))
+            .catch(err => console.error("Failed to fetch subtopics", err));
     }, []);
 
     // Fetch all Formal questions
@@ -67,21 +78,30 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     }, [view, timeLeft]);
 
     const handleStart = () => {
-        setView("story-selection");
+        setView("subtopic-selection");
     };
 
-    const handleSelectStory = async (story: Story) => {
-        setCurrentStory(story);
+    // handleSelectTopic removed
+
+    const handleSelectSubtopic = async (subtopic: Subtopic) => {
+        setCurrentSubtopic(subtopic);
+
         try {
-            const res = await fetch(`/api/part-c/segments?storyId=${story.id}&phase=formal&participantId=${participantId}`);
+            // Need topicId for the segments API? Yes, it corresponds to 'storyId' param which maps to 'topID'
+            const res = await fetch(`/api/part-c/segments?storyId=${subtopic.topic_id}&subtopicId=${subtopic.id}&phase=formal&participantId=${participantId}`);
             const data = await res.json();
             setSegments(data);
 
-            // Filter questions for this story
-            const storyQuestions = allQuestions.filter(q => q.story_id === story.id);
+            // Filter questions. 
+            // We match subtopic_id and story_id (topic_id)
+            const storyQuestions = allQuestions.filter(q =>
+                String(q.story_id) === String(subtopic.topic_id) &&
+                String(q.subtopic_id) === String(subtopic.id)
+            );
             setQuestions(storyQuestions);
 
             setCurrentSegmentIndex(0);
+            setReadingStartTime(Date.now());
             setView("reading");
         } catch (error) {
             console.error(error);
@@ -93,8 +113,16 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
         setView("question");
     };
 
-    const handleFeedbackSubmit = async (summary: string, ratings: { questionId: number, value: number }[]) => {
+    const handleFeedbackSubmit = async (unusedSummary: string, ratings: { questionId: string, value: number, reactionTimeMs: number }[]) => {
         const currentSegment = segments[currentSegmentIndex];
+
+        // Calculate passRT (Passage Reading Time)
+        // We need to track when they *started* reading.
+        // Let's assume we add a ref or state for `startReadingTime`.
+        // For now, I'll put a placeholder or use a ref if I can inject it.
+        // Actually, let's just use a timestamp from when they entered the view.
+        // I will add a `readingStartTime` state in the next step.
+        const passRT = Date.now() - (readingStartTime || Date.now());
 
         try {
             await fetch("/api/part-c/submit", {
@@ -103,35 +131,38 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                 body: JSON.stringify({
                     participantId,
                     phase: "formal",
-                    storyId: currentStory?.id,
+                    storyId: currentSubtopic?.topic_id,
+                    subtopicId: currentSubtopic?.id,
+                    conId: currentSegment.con_id,
+                    passId: currentSegment.pass_id,
                     segmentOrder: currentSegment.segment_order,
-                    summary,
-                    responses: ratings.map(r => ({
-                        questionId: r.questionId,
-                        value: r.value,
-                        isCorrect: false,
-                        reactionTimeMs: 0
-                    }))
+                    passRT,
+                    responses: ratings
                 })
             });
         } catch (e) {
             console.error("Failed to submit response", e);
         }
 
-        // Mark story as 'visited' (at least 1 segment done) if continuing or switching
-        if (currentStory) {
-            setVisitedStoryIds(prev => new Set(prev).add(currentStory.id));
-        }
-
+        // Logic for next view
         // Logic for next view
         if (pendingAction === "switch") {
-            setView("story-selection");
+            // "Switch Topic" -> Go back to Subtopic Selection list
+            if (currentSubtopic) {
+                setVisitedSubtopicIds(prev => new Set(prev).add(currentSubtopic.id));
+            }
+            setView("subtopic-selection");
         } else if (pendingAction === "continue") {
             if (currentSegmentIndex < segments.length - 1) {
                 setCurrentSegmentIndex(prev => prev + 1);
+                setReadingStartTime(Date.now());
                 setView("reading");
             } else {
-                setView("story-selection");
+                // End of passages for this subtopic
+                if (currentSubtopic) {
+                    setVisitedSubtopicIds(prev => new Set(prev).add(currentSubtopic.id));
+                }
+                setView("subtopic-selection");
             }
         }
         setPendingAction(null);
@@ -154,7 +185,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                 <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)]">Part 2: Formal Task</h2>
                 <div className="mb-8 text-[var(--muted)] text-base leading-relaxed">
                     <p className="mb-2">You have <strong className="text-[var(--foreground)]">15 minutes</strong> to read.</p>
-                    <p>You must visit all available topics.</p>
+                    <p>You can choose any subtopic to read.</p>
                 </div>
                 <button
                     onClick={handleStart}
@@ -166,41 +197,47 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
         );
     }
 
-    if (view === "story-selection") {
-        const allVisited = stories.length > 0 && stories.every(s => visitedStoryIds.has(s.id));
+    // story-selection view removed
+
+    if (view === "subtopic-selection") {
+        const allVisited = subtopics.length > 0 && subtopics.every(sub => visitedSubtopicIds.has(sub.id));
+
         return (
             <div className="max-w-6xl mx-auto mt-12 px-6">
                 <div className="flex justify-between items-center mb-10 pb-4 border-b border-[var(--border)]">
-                    <h2 className="text-2xl font-semibold text-[var(--foreground)]">Formal Topics</h2>
+                    <h2 className="text-2xl font-semibold text-[var(--foreground)]">Available Subtopics</h2>
                     <div className="text-lg font-mono font-medium text-[var(--foreground)] bg-[var(--surface)] px-3 py-1.5 rounded-md border border-[var(--border)]">
                         {formatTime(timeLeft)}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {stories.map(story => (
-                        <button
-                            key={story.id}
-                            onClick={() => handleSelectStory(story)}
-                            // Formal task usually allows revisiting too
-                            className={`p-6 rounded-xl border text-left transition-all duration-200 min-h-[120px] flex flex-col justify-between ${visitedStoryIds.has(story.id)
-                                ? "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] opacity-80" // Visited style
-                                : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)] hover:shadow-sm"
-                                }`}
-                        >
-                            <h3 className={`text-lg font-medium ${visitedStoryIds.has(story.id) ? "opacity-60" : ""}`}>{story.title}</h3>
-                            {visitedStoryIds.has(story.id) && <span className="text-xs text-green-600 font-medium uppercase tracking-wide bg-green-50 px-2 py-1 rounded-full self-start">Visited</span>}
-                        </button>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {subtopics.map(sub => {
+                        const isVisited = visitedSubtopicIds.has(sub.id);
+                        return (
+                            <button
+                                key={sub.id}
+                                onClick={() => !isVisited && handleSelectSubtopic(sub)}
+                                disabled={isVisited}
+                                className={`p-6 rounded-xl border text-left transition-all ${isVisited
+                                    ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+                                    : "bg-[var(--surface)] border-[var(--border)] hover:border-[var(--foreground)] hover:shadow-sm"
+                                    }`}
+                            >
+                                <h3 className="text-lg font-medium">{sub.title}</h3>
+                                {isVisited && <span className="text-xs font-bold uppercase tracking-wider mt-2 block">Visited</span>}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {allVisited && (
-                    <div className="mt-12 text-center">
+                    <div className="mt-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <button
                             onClick={onComplete}
-                            className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
+                            className="bg-[var(--primary)] text-[var(--primary-fg)] px-12 py-4 rounded-xl text-lg font-bold shadow-lg hover:opacity-90 transition-all transform hover:scale-105"
                         >
-                            Complete Formal Task
+                            Continue to Next Part
                         </button>
                     </div>
                 )}
@@ -208,11 +245,16 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
         );
     }
 
-    if (view === "reading" && currentStory && segments[currentSegmentIndex]) {
+    if (view === "reading" && currentSubtopic && segments[currentSegmentIndex]) {
         return (
             <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
                 <div className="flex justify-between items-center mb-8 border-b border-[var(--border)] pb-4">
-                    <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest">{currentStory.title}</h3>
+                    <div className="flex flex-col">
+                        <div className="text-xs text-[var(--muted)] uppercase tracking-wide mb-1">
+                            {currentSubtopic.title}
+                        </div>
+                        <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest hidden">Reading</h3>
+                    </div>
                     <div className="flex items-center gap-4">
                         <span className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">
                             Segment {currentSegmentIndex + 1}/{segments.length}
@@ -232,13 +274,13 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                         onClick={() => triggerQuestion("switch")}
                         className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
                     >
-                        Go To Other Topics
+                        Go To Other Subtopics
                     </button>
                     <button
                         onClick={() => triggerQuestion("continue")}
                         className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium text-sm shadow-sm focus-ring"
                     >
-                        {currentSegmentIndex < segments.length - 1 ? "Next Segment" : "Finish Story"}
+                        {currentSegmentIndex < segments.length - 1 ? "Next Segment" : "Finish Subtopic"}
                     </button>
                 </div>
             </div>
@@ -246,17 +288,9 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     }
 
     if (view === "question") {
-        if (currentQuestions.length === 0) {
-            return (
-                <div className="max-w-xl mx-auto glass-panel p-10 mt-12 text-center">
-                    <p>No questions loaded for this segment.</p>
-                    <button onClick={() => handleFeedbackSubmit("No questions found", [])} className="bg-[var(--primary)] text-[var(--primary-fg)] px-4 py-2 rounded mt-4">Continue</button>
-                </div>
-            );
-        }
         return (
             <SegmentFeedback
-                questions={currentQuestions}
+                questions={[]} // Pass empty or generic if needed, but the component uses hardcoded ones now
                 onSubmit={handleFeedbackSubmit}
             />
         );

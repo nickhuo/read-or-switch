@@ -1,81 +1,99 @@
 "use client";
 
-import { useState } from "react";
-import { Question } from "../../part-b/types";
+import React, { useState, useEffect } from "react";
+import { Question } from "@/app/part-b/types";
 
 interface SegmentFeedbackProps {
-    questions: Question[]; // Expecting exactly 4 questions
-    onSubmit: (summary: string, ratings: { questionId: number, value: number }[]) => void;
+    questions: Question[];
+    onSubmit: (summary: string, responses: any[]) => void;
 }
 
-export default function SegmentFeedback({ questions, onSubmit }: SegmentFeedbackProps) {
-    const [summary, setSummary] = useState("");
-    const [ratings, setRatings] = useState<{ [key: number]: number }>({});
+const GENERIC_RATING_QUESTIONS = [
+    {
+        id: "c1",
+        text: "Compared to the other articles that you have read today, how much new information was in this article?",
+    },
+    {
+        id: "c2",
+        text: "How easy was this article to read?",
+    },
+    {
+        id: "c3",
+        text: "How much did you learn from this article?",
+    },
+    {
+        id: "c4",
+        text: "How much did you learn overall from the articles you have read so far today (including this article)?",
+    },
+];
 
-    // Initialize ratings
-    if (Object.keys(ratings).length === 0 && questions.length > 0) {
-        const initial: any = {};
-        questions.forEach(q => initial[q.id] = 50);
-        // This causes infinite loop if not careful, better to init in handleClick or lazily?
-        // Actually useState callback or useEffect is better.
-        // But let's just use default 50 in render if missing.
-    }
+export default function SegmentFeedback({ onSubmit }: SegmentFeedbackProps) {
+    const [step, setStep] = useState(0); // 0 to 3 for the 4 questions
+    const [responses, setResponses] = useState<{ [key: string]: number }>({});
+    const [currentValue, setCurrentValue] = useState<number>(50); // Default slider value
+    const [startTime, setStartTime] = useState<number>(Date.now());
 
-    const handleRatingChange = (qId: number, val: number) => {
-        setRatings(prev => ({ ...prev, [qId]: val }));
+    useEffect(() => {
+        // Reset slider for new question
+        setCurrentValue(50);
+        setStartTime(Date.now());
+    }, [step]);
+
+    const handleNext = () => {
+        const currentQuestion = GENERIC_RATING_QUESTIONS[step];
+        const reactionTime = Date.now() - startTime;
+
+        const newResponses = {
+            ...responses,
+            [currentQuestion.id]: currentValue
+        };
+        setResponses(newResponses);
+
+        if (step < GENERIC_RATING_QUESTIONS.length - 1) {
+            setStep(step + 1);
+        } else {
+            onSubmit("", Object.entries(newResponses).map(([qid, val]) => ({
+                questionId: qid,
+                value: val,
+                reactionTimeMs: 0
+            })));
+        }
     };
 
-    const handleClick = () => {
-        const results = questions.map(q => ({
-            questionId: q.id,
-            value: ratings[q.id] !== undefined ? ratings[q.id] : 50
-        }));
-        onSubmit(summary, results);
-    };
+    const currentQuestion = GENERIC_RATING_QUESTIONS[step];
 
     return (
-        <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
-            <h2 className="text-xl font-semibold mb-8 text-[var(--foreground)]">Quick Check</h2>
+        <div className="max-w-2xl mx-auto p-8">
+            <h2 className="text-xl font-bold mb-6">Feedback ({step + 1}/{GENERIC_RATING_QUESTIONS.length})</h2>
 
-            <div className="space-y-8">
-                {/* 1. Summary */}
-                <div>
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-3">1. Short Comprehension (Summary)</label>
-                    <textarea
-                        className="w-full border border-[var(--border)] bg-[var(--surface)] p-3 rounded-lg focus-ring text-sm"
-                        rows={3}
-                        placeholder="Briefly summarize what you just read..."
-                        value={summary}
-                        onChange={(e) => setSummary(e.target.value)}
+            <div className="mb-8">
+                <label className="block text-lg font-medium mb-4">
+                    {currentQuestion.text}
+                </label>
+
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-500">0</span>
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={currentValue}
+                        onChange={(e) => setCurrentValue(parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     />
+                    <span className="text-sm text-gray-500">100</span>
                 </div>
+                <div className="text-center mt-2 font-bold text-blue-600">
+                    {currentValue}
+                </div>
+            </div>
 
-                {/* 2. Ratings (Dynamic from DB questions) */}
-                {questions.map((q, idx) => (
-                    <div key={q.id}>
-                        <label className="block text-sm font-medium text-[var(--foreground)] mb-3">
-                            {idx + 2}. {q.question_text} ({ratings[q.id] !== undefined ? ratings[q.id] : 50})
-                        </label>
-                        <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={ratings[q.id] !== undefined ? ratings[q.id] : 50}
-                            onChange={(e) => handleRatingChange(q.id, Number(e.target.value))}
-                            className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]"
-                        />
-                        <div className="flex justify-between text-xs text-[var(--muted)] mt-1">
-                            <span>{q.option_1}</span>
-                            <span>{q.option_2}</span>
-                        </div>
-                    </div>
-                ))}
-
+            <div className="flex justify-end">
                 <button
-                    onClick={handleClick}
-                    className="w-full bg-[var(--primary)] text-[var(--primary-fg)] py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring"
+                    onClick={handleNext}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                    Submit & Continue
+                    {step === GENERIC_RATING_QUESTIONS.length - 1 ? "Submit" : "Next"}
                 </button>
             </div>
         </div>

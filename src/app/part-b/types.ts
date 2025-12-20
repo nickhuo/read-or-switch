@@ -10,6 +10,8 @@ export interface Segment {
     story_id: number;
     content: string;
     segment_order: number;
+    pass_id?: string;
+    con_id?: string;
 }
 
 export interface Question {
@@ -23,4 +25,5 @@ export interface Question {
     option_3: string;
     option_4: string;
     correct_option: number;
+    subtopic_id?: string;
 }

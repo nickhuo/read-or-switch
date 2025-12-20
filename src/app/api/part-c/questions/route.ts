@@ -14,9 +14,9 @@ export async function GET(request: Request) {
         const storiesTable = phase === 'practice' ? 'part_c_prac_topic' : 'part_c_topic';
 
         const questions = await query(
-            `SELECT q.*, s.title as story_title 
+            `SELECT q.*, s.topTitle as story_title 
              FROM ${questionsTable} q 
-             JOIN ${storiesTable} s ON q.story_id = s.id`
+             JOIN ${storiesTable} s ON q.topID = s.topID`
         );
         return NextResponse.json(questions);
     } catch (error) {

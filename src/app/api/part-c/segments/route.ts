@@ -3,12 +3,13 @@ import { query } from "@/lib/db";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const storyId = searchParams.get("storyId");
+    const storyId = searchParams.get("storyId"); // This is actually topicId (topID)
+    const subtopicId = searchParams.get("subtopicId"); // This corresponds to subtopID
     const phase = searchParams.get("phase");
     const participantId = searchParams.get("participantId");
 
     if (!storyId || !phase || !participantId) {
-        return NextResponse.json({ error: "Story ID, Phase, and Participant ID are required" }, { status: 400 });
+        return NextResponse.json({ error: "Story ID (Topic ID), Phase, and Participant ID are required" }, { status: 400 });
     }
 
     try {
@@ -27,12 +28,25 @@ export async function GET(request: Request) {
         // 2. Fetch Segments filtered by condition
         const segmentsTable = phase === 'practice' ? 'part_c_prac_passage' : 'part_c_passage';
 
-        let querySql = `SELECT * FROM ${segmentsTable} WHERE story_id = ? ORDER BY segment_order ASC`;
+        const selectFields = "passID as id, topID as story_id, subtopID as subtopic_id, passText as content, passOrder as segment_order, passID as pass_id, conID as con_id";
+
+        // Base query: filter by Topic (topID)
+        let whereClause = "topID = ?";
         let queryParams = [storyId];
 
+        // Optional: filter by Subtopic (subtopID)
+        if (subtopicId) {
+            whereClause += " AND subtopID = ?";
+            queryParams.push(subtopicId);
+        }
+
+        let querySql = `SELECT ${selectFields} FROM ${segmentsTable} WHERE ${whereClause} ORDER BY CAST(passOrder AS UNSIGNED) ASC`;
+
         if (phase === 'formal') {
-            querySql = `SELECT * FROM ${segmentsTable} WHERE story_id = ? AND sp2_con_id = ? ORDER BY segment_order ASC`;
-            queryParams = [storyId, condition];
+            // Note: conID is the column in schema, not sp2_con_id
+            whereClause += " AND conID = ?";
+            queryParams.push(condition);
+            querySql = `SELECT ${selectFields} FROM ${segmentsTable} WHERE ${whereClause} ORDER BY CAST(passOrder AS UNSIGNED) ASC`;
         }
 
         const segments = await query(querySql, queryParams);
