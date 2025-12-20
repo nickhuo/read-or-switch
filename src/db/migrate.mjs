@@ -28,8 +28,8 @@ const dbConfig = {
     multipleStatements: true
 };
 
-function parseCSVLine(line: string): string[] {
-    const values: string[] = [];
+function parseCSVLine(line) {
+    const values = [];
     let currentValue = '';
     let insideQuotes = false;
 
@@ -53,11 +53,8 @@ function parseCSVLine(line: string): string[] {
     return values;
 }
 
-async function populatePartA(connection: mysql.Connection) {
+async function populatePartA(connection) {
     console.log('Populating Part A data...');
-
-    // Disable FK checks for truncation
-    await connection.query("SET FOREIGN_KEY_CHECKS = 0");
 
     const sentencesPath = path.resolve(process.cwd(), 'docs/Study Material/part_a_sentences.csv');
     if (fs.existsSync(sentencesPath)) {
@@ -100,6 +97,12 @@ async function populatePartA(connection: mysql.Connection) {
                 const cols = parseCSVLine(line);
                 if (cols.length < 15) continue;
 
+                // CSV structure: StudyPartID...Option_1(10)...CorrectAns(14)
+                if (cols.length < 15) {
+                    console.warn('Skipping malformed question line:', line);
+                    continue;
+                }
+
                 const correctAns = cols[14].trim();
                 let correctOption = 0;
                 if (correctAns === cols[10].trim()) correctOption = 1;
@@ -120,9 +123,6 @@ async function populatePartA(connection: mysql.Connection) {
     } else {
         console.warn(`File not found: ${questionsPath}`);
     }
-
-    // Re-enable FK checks
-    await connection.query("SET FOREIGN_KEY_CHECKS = 1");
 }
 
 async function main() {
@@ -143,7 +143,7 @@ async function main() {
             const statement = statements[i];
             try {
                 await connection.query(statement);
-            } catch (err: any) {
+            } catch (err) {
                 // Ignore
             }
         }
@@ -151,10 +151,22 @@ async function main() {
         console.log('Schema migration completed.');
         await populatePartA(connection);
 
-        console.log('Verification completed.');
+        // Verification counts
+        const [sentRows] = await connection.query("SELECT COUNT(*) as count FROM part_a_sentences");
+        const [questRows] = await connection.query("SELECT COUNT(*) as count FROM part_a_questions");
+
+        const verificationOutput = `
+Verification Results:
+part_a_sentences count: ${sentRows[0].count}
+part_a_questions count: ${questRows[0].count}
+        `;
+
+        fs.writeFileSync('verification.txt', verificationOutput);
+        console.log(verificationOutput);
 
     } catch (error) {
         console.error('Fatal Error:', error);
+        fs.writeFileSync('verification_error.txt', String(error));
     } finally {
         if (connection) await connection.end();
     }

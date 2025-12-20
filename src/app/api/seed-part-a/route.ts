@@ -3,111 +3,163 @@ import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import fs from "fs";
 import path from "path";
-import { parse } from "csv-parse/sync";
 
-interface SentenceRecord {
-    StudyPartID: string;
-    SentSetID: string;
-    TextID: string;
-    Order: string;
-    SP1ConID: string;
-    Predictability: string;
-    PredictID: string;
-    Make_sense: string;
-    Make_sense_ID: string;
-    TextType: string;
-    TextTypeID: string;
-    GenType: string;
-    GenTypeID: string;
-    Note: string;
-    SentenceText: string;
+// Manual CSV parser to avoid dependency issues
+function parseCSVLine(line: string): string[] {
+    const values: string[] = [];
+    let currentValue = '';
+    let insideQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            if (insideQuotes && line[i + 1] === '"') {
+                currentValue += '"';
+                i++;
+            } else {
+                insideQuotes = !insideQuotes;
+            }
+        } else if (char === ',' && !insideQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+        } else {
+            currentValue += char;
+        }
+    }
+    values.push(currentValue.trim());
+    return values;
 }
 
 export async function GET() {
+    // Log start
+    try { fs.writeFileSync('seed_start.txt', 'started'); } catch (e) { }
+
+    let connection;
     try {
-        const csvPath = path.join(process.cwd(), "docs", "Study Material", "Study Part A Materials-Table 1.csv");
-        const fileContent = fs.readFileSync(csvPath, "utf-8");
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
 
-        const records = parse(fileContent, {
-            columns: true,
-            skip_empty_lines: true,
-            trim: true,
-        }) as SentenceRecord[];
+        // Disable FK checks
+        await connection.query("SET FOREIGN_KEY_CHECKS = 0");
 
-        const connection = await pool.getConnection();
+        // 1. Populate part_a_sentences
+        const sentencesPath = path.resolve(process.cwd(), 'docs/Study Material/part_a_sentences.csv');
+        let sentencesCount = 0;
 
-        try {
-            await connection.beginTransaction();
+        if (fs.existsSync(sentencesPath)) {
+            const fileContent = fs.readFileSync(sentencesPath, "utf-8");
+            const lines = fileContent.split('\n').filter(l => l.trim().length > 0);
 
-            // Re-create table to ensure schema matches (since we can't easily run schema.sql from here without raw query)
-            // This is a dev-helper route, so dropping is acceptable for initial setup.
-            await connection.execute("DROP TABLE IF EXISTS part_a_sentences");
+            // Assume first line is header, so skip it
+            const dataLines = lines.slice(1);
 
-            await connection.execute(`
-                CREATE TABLE part_a_sentences (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    study_part_id INT,
-                    set_id INT NOT NULL,
-                    text_id VARCHAR(50),
-                    sentence_index INT NOT NULL,
-                    sp1_con_id VARCHAR(50),
-                    predictability VARCHAR(10),
-                    predict_id INT,
-                    make_sense VARCHAR(10),
-                    make_sense_id INT,
-                    text_type VARCHAR(20),
-                    text_type_id INT,
-                    gen_type VARCHAR(20),
-                    gen_type_id INT,
-                    note TEXT,
-                    content TEXT NOT NULL
-                )
-            `);
+            await connection.query("TRUNCATE TABLE part_a_sentences");
 
-            const insertQuery = `
-                INSERT INTO part_a_sentences (
-                    study_part_id, set_id, text_id, sentence_index, sp1_con_id, 
-                    predictability, predict_id, make_sense, make_sense_id, 
-                    text_type, text_type_id, gen_type, gen_type_id, note, content
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            const insertSentence = `
+                INSERT INTO part_a_sentences 
+                (study_part_id, set_id, text_id, sentence_index, sp1_con_id, predictability, predict_id, make_sense, make_sense_id, text_type, text_type_id, gen_type, gen_type_id, note, content)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
 
-            for (const record of records) {
-                // Map CSV fields to DB columns
-                // CSV: StudyPartID,SentSetID,TextID,Order,SP1ConID,Predictability,PredictID,Make_sense,Make_sense_ID,TextType,TextTypeID,GenType,GenTypeID,Note,SentenceText
+            for (const line of dataLines) {
+                const cols = parseCSVLine(line);
+                if (cols.length < 15) continue;
+                // StudyPartID(0), SentSetID(1), TextID(2), Order(3), SP1ConID(4), Predictability(5), PredictID(6), Make_sense(7), Make_sense_ID(8), TextType(9), TextTypeID(10), GenType(11), GenTypeID(12), Note(13), SentenceText(14)
 
-                await connection.execute(insertQuery, [
-                    parseInt(record.StudyPartID) || 0,
-                    parseInt(record.SentSetID),
-                    record.TextID,
-                    parseInt(record.Order),
-                    record.SP1ConID,
-                    record.Predictability,
-                    parseInt(record.PredictID) || 0,
-                    record.Make_sense,
-                    parseInt(record.Make_sense_ID) || 0,
-                    record.TextType,
-                    parseInt(record.TextTypeID) || 0,
-                    record.GenType,
-                    parseInt(record.GenTypeID) || 0,
-                    record.Note,
-                    record.SentenceText
+                await connection.execute(insertSentence, [
+                    parseInt(cols[0]) || 0,
+                    parseInt(cols[1]) || 0,
+                    cols[2],
+                    parseInt(cols[3]) || 0,
+                    cols[4],
+                    cols[5],
+                    parseInt(cols[6]) || 0,
+                    cols[7],
+                    parseInt(cols[8]) || 0,
+                    cols[9],
+                    parseInt(cols[10]) || 0,
+                    cols[11],
+                    parseInt(cols[12]) || 0,
+                    cols[13],
+                    cols[14]
                 ]);
             }
-
-            await connection.commit();
-            return NextResponse.json({ success: true, count: records.length, message: "Table recreated and data seeded" });
-
-        } catch (dbError) {
-            await connection.rollback();
-            throw dbError;
-        } finally {
-            connection.release();
+            sentencesCount = dataLines.length;
+        } else {
+            console.warn("Sentences CSV not found at", sentencesPath);
+            fs.writeFileSync('seed_sent_missing.txt', sentencesPath);
         }
 
-    } catch (error: unknown) {
+        // 2. Populate part_a_questions
+        const questionsPath = path.resolve(process.cwd(), 'docs/Study Material/part_a_questions.csv');
+        let questionsCount = 0;
+
+        if (fs.existsSync(questionsPath)) {
+            const fileContent = fs.readFileSync(questionsPath, "utf-8");
+            const lines = fileContent.split('\n').filter(l => l.trim().length > 0);
+            const dataLines = lines.slice(1);
+
+            await connection.query("TRUNCATE TABLE part_a_questions");
+
+            const insertQuestion = `
+                INSERT INTO part_a_questions
+                (study_part_id, sent_set, text_id, sent_order, p1_con_id, predict_id, make_sense_id, text_type_id, gen_type_id, question_text, option_1, option_2, option_3, option_4, correct_ans, correct_option)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+            for (const line of dataLines) {
+                const cols = parseCSVLine(line);
+                if (cols.length < 15) continue;
+                // StudyPartID(0), SentSet(1), TextID(2), SentOrder(3), P1ConID(4), PredictID(5), Make_sense_ID(6), TextTypeID(7), GenTypeID(8), Questions(9), Option_1(10), Option_2(11), Option_3(12), Option_4(13), CorrectAns(14)
+
+                const correctAns = (cols[14] || "").trim();
+                let correctOption = 0;
+                if (correctAns === (cols[10] || "").trim()) correctOption = 1;
+                else if (correctAns === (cols[11] || "").trim()) correctOption = 2;
+                else if (correctAns === (cols[12] || "").trim()) correctOption = 3;
+                else if (correctAns === (cols[13] || "").trim()) correctOption = 4;
+
+                await connection.execute(insertQuestion, [
+                    parseInt(cols[0]) || 0,
+                    parseInt(cols[1]) || 0,
+                    cols[2],
+                    parseInt(cols[3]) || 0,
+                    cols[4],
+                    parseInt(cols[5]) || 0,
+                    parseInt(cols[6]) || 0,
+                    parseInt(cols[7]) || 0,
+                    parseInt(cols[8]) || 0,
+                    cols[9],
+                    cols[10],
+                    cols[11],
+                    cols[12],
+                    cols[13],
+                    cols[14],
+                    correctOption
+                ]);
+            }
+            questionsCount = dataLines.length;
+        } else {
+            console.warn("Questions CSV not found at", questionsPath);
+            fs.writeFileSync('seed_quest_missing.txt', questionsPath);
+        }
+
+        await connection.commit();
+        await connection.query("SET FOREIGN_KEY_CHECKS = 1");
+
+        fs.writeFileSync('seed_success.txt', JSON.stringify({ sentencesCount, questionsCount }));
+        return NextResponse.json({
+            success: true,
+            sentencesSeeded: sentencesCount,
+            questionsSeeded: questionsCount
+        });
+
+    } catch (error: any) {
+        if (connection) await connection.rollback();
         console.error("Seeding error:", error);
-        const message = error instanceof Error ? error.message : "Unknown error";
-        return NextResponse.json({ error: message }, { status: 500 });
+        fs.writeFileSync('seed_error.txt', error.message + '\n' + error.stack);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    } finally {
+        if (connection) connection.release();
     }
 }

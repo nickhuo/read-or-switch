@@ -1,21 +1,31 @@
 
-import fs from 'fs';
-import path from 'path';
-import mysql from 'mysql2/promise';
+const fs = require('fs');
+const path = require('path');
+const mysql = require('mysql2/promise');
+
+try {
+    fs.writeFileSync('debug_start.txt', 'started');
+} catch (e) {
+    // ignore
+}
 
 const envPath = path.resolve(process.cwd(), '.env.local');
 console.log(`Loading env from ${envPath}`);
 
 if (fs.existsSync(envPath)) {
-    const envConfig = fs.readFileSync(envPath, 'utf8');
-    envConfig.split('\n').forEach((line) => {
-        const match = line.match(/^([^=]+)=(.*)$/);
-        if (match) {
-            const key = match[1].trim();
-            const value = match[2].trim().replace(/^['"]|['"]$/g, '');
-            process.env[key] = value;
-        }
-    });
+    try {
+        const envConfig = fs.readFileSync(envPath, 'utf8');
+        envConfig.split('\n').forEach((line) => {
+            const match = line.match(/^([^=]+)=(.*)$/);
+            if (match) {
+                const key = match[1].trim();
+                const value = match[2].trim().replace(/^['"]|['"]$/g, '');
+                process.env[key] = value;
+            }
+        });
+    } catch (e) {
+        fs.writeFileSync('debug_env_error.txt', String(e));
+    }
 } else {
     console.error(".env.local not found!");
 }
@@ -28,8 +38,8 @@ const dbConfig = {
     multipleStatements: true
 };
 
-function parseCSVLine(line: string): string[] {
-    const values: string[] = [];
+function parseCSVLine(line) {
+    const values = [];
     let currentValue = '';
     let insideQuotes = false;
 
@@ -53,11 +63,8 @@ function parseCSVLine(line: string): string[] {
     return values;
 }
 
-async function populatePartA(connection: mysql.Connection) {
+async function populatePartA(connection) {
     console.log('Populating Part A data...');
-
-    // Disable FK checks for truncation
-    await connection.query("SET FOREIGN_KEY_CHECKS = 0");
 
     const sentencesPath = path.resolve(process.cwd(), 'docs/Study Material/part_a_sentences.csv');
     if (fs.existsSync(sentencesPath)) {
@@ -80,10 +87,11 @@ async function populatePartA(connection: mysql.Connection) {
                     cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12], cols[13], cols[14]
                 ]);
             }
-            console.log(`Inserted ${dataLines.length} rows into part_a_sentences.`);
+            fs.writeFileSync('debug_sentences_count.txt', String(dataLines.length));
         }
     } else {
         console.warn(`File not found: ${sentencesPath}`);
+        fs.writeFileSync('debug_sentences_missing.txt', sentencesPath);
     }
 
     const questionsPath = path.resolve(process.cwd(), 'docs/Study Material/part_a_questions.csv');
@@ -115,14 +123,12 @@ async function populatePartA(connection: mysql.Connection) {
                     cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8], cols[9], cols[10], cols[11], cols[12], cols[13], cols[14], correctOption
                 ]);
             }
-            console.log(`Inserted ${dataLines.length} rows into part_a_questions.`);
+            fs.writeFileSync('debug_questions_count.txt', String(dataLines.length));
         }
     } else {
         console.warn(`File not found: ${questionsPath}`);
+        fs.writeFileSync('debug_questions_missing.txt', questionsPath);
     }
-
-    // Re-enable FK checks
-    await connection.query("SET FOREIGN_KEY_CHECKS = 1");
 }
 
 async function main() {
@@ -132,29 +138,43 @@ async function main() {
     try {
         connection = await mysql.createConnection(dbConfig);
         console.log('Connected.');
+        fs.writeFileSync('debug_db_connected.txt', 'connected');
 
+        /*
         const schemaPath = path.resolve(process.cwd(), 'src/db/schema.sql');
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 
-        console.log('Executing schema.sql...');
         const statements = schemaSql.split(';').map(s => s.trim()).filter(s => s.length > 0);
 
         for (let i = 0; i < statements.length; i++) {
             const statement = statements[i];
             try {
                 await connection.query(statement);
-            } catch (err: any) {
+            } catch (err) {
                 // Ignore
             }
         }
+        */
+        // Skip schema migration re-run to simplify debug, just populate
 
-        console.log('Schema migration completed.');
         await populatePartA(connection);
 
-        console.log('Verification completed.');
+        // Verification counts
+        const [sentRows] = await connection.query("SELECT COUNT(*) as count FROM part_a_sentences");
+        const [questRows] = await connection.query("SELECT COUNT(*) as count FROM part_a_questions");
+
+        const verificationOutput = `
+Verification Results:
+part_a_sentences count: ${sentRows[0].count}
+part_a_questions count: ${questRows[0].count}
+        `;
+
+        fs.writeFileSync('verification.txt', verificationOutput);
+        console.log(verificationOutput);
 
     } catch (error) {
         console.error('Fatal Error:', error);
+        fs.writeFileSync('verification_error.txt', String(error));
     } finally {
         if (connection) await connection.end();
     }

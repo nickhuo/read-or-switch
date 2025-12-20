@@ -71,9 +71,199 @@ CREATE TABLE IF NOT EXISTS part_a_summaries (
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
 );
 
+DROP TABLE IF EXISTS part_a_questions;
+CREATE TABLE IF NOT EXISTS part_a_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    study_part_id INT,
+    sent_set INT,
+    text_id VARCHAR(50),
+    sent_order INT,
+    p1_con_id VARCHAR(50),
+    predict_id INT,
+    make_sense_id INT,
+    text_type_id INT,
+    gen_type_id INT,
+    question_text TEXT NOT NULL,
+    option_1 TEXT NOT NULL,
+    option_2 TEXT NOT NULL,
+    option_3 TEXT NOT NULL,
+    option_4 TEXT NOT NULL,
+    correct_ans VARCHAR(255),
+    correct_option INT COMMENT '1-4 (Legacy/index)'
+);
+
+DROP TABLE IF EXISTS part_a_responses;
+CREATE TABLE IF NOT EXISTS part_a_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT NOT NULL COMMENT '1-4',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES part_a_questions(id)
+);
+
+DROP TABLE IF EXISTS part_a_logs;
+CREATE TABLE IF NOT EXISTS part_a_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    set_id INT NOT NULL,
+    sentence_index INT NOT NULL,
+    word_index INT,
+    action_type VARCHAR(50) DEFAULT 'word_reveal',
+    reading_time_ms INT,
+    timestamp DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+);
+
+-- Seed Part A Questions (Mock)
+INSERT IGNORE INTO part_a_questions (question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
+('What was the main theme of the sentences about the fox?', 'Laziness', 'Speed', 'Agility', 'Colors', 3),
+('Which object was mentioned as being watched?', 'Clock', 'Pot', 'Television', 'Bird', 2),
+('Who picked the pickled peppers?', 'Paul', 'Peter', 'Patrick', 'Phil', 2),
+('What did she sell by the seashore?', 'Seaweed', 'Sandcastles', 'Seashells', 'Surfboards', 3);
+
+-- Part B: Story Reading & Comprehension
+-- ==========================================
+
+-- PRACTICE Tables
+DROP TABLE IF EXISTS part_b_practice_stories;
+CREATE TABLE IF NOT EXISTS part_b_practice_stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    story_topic_id VARCHAR(50)
+);
+
+DROP TABLE IF EXISTS part_b_practice_segments;
+CREATE TABLE IF NOT EXISTS part_b_practice_segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    content TEXT NOT NULL,
+    segment_order INT NOT NULL,
+    text_id VARCHAR(50),
+    predictability VARCHAR(20),
+    predict_id INT,
+    sp2_con_id VARCHAR(50),
+    FOREIGN KEY (story_id) REFERENCES part_b_practice_stories(id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS part_b_practice_actions;
+CREATE TABLE IF NOT EXISTS part_b_practice_actions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    story_id INT NOT NULL,
+    segment_id INT,
+    action_type ENUM('continue', 'switch', 'start_story') NOT NULL,
+    reading_time_ms INT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (story_id) REFERENCES part_b_practice_stories(id),
+    FOREIGN KEY (segment_id) REFERENCES part_b_practice_segments(id)
+);
+
+DROP TABLE IF EXISTS part_b_practice_questions;
+CREATE TABLE IF NOT EXISTS part_b_practice_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    question_text TEXT NOT NULL,
+    question_order INT,
+    option_1 VARCHAR(255) NOT NULL,
+    option_2 VARCHAR(255) NOT NULL,
+    option_3 VARCHAR(255) NOT NULL,
+    option_4 VARCHAR(255) NOT NULL,
+    correct_option INT NOT NULL COMMENT '1-4',
+    FOREIGN KEY (story_id) REFERENCES part_b_practice_stories(id)
+);
+
+DROP TABLE IF EXISTS part_b_practice_responses;
+CREATE TABLE IF NOT EXISTS part_b_practice_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT NOT NULL COMMENT '1-4',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES part_b_practice_questions(id)
+);
+
+-- FORMAL Tables
+DROP TABLE IF EXISTS part_b_formal_stories;
+CREATE TABLE IF NOT EXISTS part_b_formal_stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    story_topic_id VARCHAR(50)
+);
+
+DROP TABLE IF EXISTS part_b_formal_segments;
+CREATE TABLE IF NOT EXISTS part_b_formal_segments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    content TEXT NOT NULL,
+    segment_order INT NOT NULL,
+    text_id VARCHAR(50),
+    predictability VARCHAR(20),
+    predict_id INT,
+    sp2_con_id VARCHAR(50),
+    FOREIGN KEY (story_id) REFERENCES part_b_formal_stories(id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS part_b_formal_actions;
+CREATE TABLE IF NOT EXISTS part_b_formal_actions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    story_id INT NOT NULL,
+    segment_id INT,
+    action_type ENUM('continue', 'switch', 'start_story') NOT NULL,
+    reading_time_ms INT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (story_id) REFERENCES part_b_formal_stories(id),
+    FOREIGN KEY (segment_id) REFERENCES part_b_formal_segments(id)
+);
+
+DROP TABLE IF EXISTS part_b_formal_summaries;
+CREATE TABLE IF NOT EXISTS part_b_formal_summaries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    content TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+);
+
+DROP TABLE IF EXISTS part_b_formal_questions;
+CREATE TABLE IF NOT EXISTS part_b_formal_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    story_id INT NOT NULL,
+    question_text TEXT NOT NULL,
+    question_order INT,
+    option_1 VARCHAR(255) NOT NULL,
+    option_2 VARCHAR(255) NOT NULL,
+    option_3 VARCHAR(255) NOT NULL,
+    option_4 VARCHAR(255) NOT NULL,
+    correct_option INT NOT NULL COMMENT '1-4',
+    FOREIGN KEY (story_id) REFERENCES part_b_formal_stories(id)
+);
+
+DROP TABLE IF EXISTS part_b_formal_responses;
+CREATE TABLE IF NOT EXISTS part_b_formal_responses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    question_id INT NOT NULL,
+    response_option INT NOT NULL COMMENT '1-4',
+    is_correct BOOLEAN NOT NULL,
+    reaction_time_ms INT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
+    FOREIGN KEY (question_id) REFERENCES part_b_formal_questions(id)
+); 
+
 
 -- ==========================================
--- Part 3: Text Foraging (Part C)
+-- Part C: Text Foraging
 -- ==========================================
 
 -- part_c_topic
@@ -289,32 +479,7 @@ CREATE TABLE `part_c_vocabulary_responses` (
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Part C Summaries and Responses (For Practice and Formal)
--- Added to match API expectations which mirror Part B structure but with Part C naming
-
-DROP TABLE IF EXISTS `part_c_practice_summaries`;
-CREATE TABLE `part_c_practice_summaries` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `participant_id` bigint(20) NOT NULL,
-    `story_id` varchar(50),
-    `segment_order` int(11),
-    `content` text,
-    `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-DROP TABLE IF EXISTS `part_c_formal_summaries`;
-CREATE TABLE `part_c_formal_summaries` (
-    `id` int(11) NOT NULL AUTO_INCREMENT,
-    `participant_id` bigint(20) NOT NULL,
-    `story_id` varchar(50),
-    `segment_order` int(11),
-    `content` text,
-    `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+-- part_c_practice_responses
 DROP TABLE IF EXISTS `part_c_practice_responses`;
 CREATE TABLE `part_c_practice_responses` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -340,237 +505,5 @@ CREATE TABLE `part_c_formal_responses` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
--- ==========================================
--- Part 4: Final Assessment
--- ==========================================
-
--- Comprehension Questions (Part 4 - Final Assessment, mostly static content now)
-DROP TABLE IF EXISTS comprehension_questions;
-CREATE TABLE IF NOT EXISTS comprehension_questions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    question_text TEXT NOT NULL,
-    option_1 TEXT NOT NULL,
-    option_2 TEXT NOT NULL,
-    option_3 TEXT NOT NULL,
-    option_4 TEXT NOT NULL,
-    correct_option INT NOT NULL COMMENT '1-4'
-    -- Removed story_id dependency as these questions are static/mock for now or matched by ID
-);
-
--- Comprehension Responses
-DROP TABLE IF EXISTS part4_comprehension_responses;
-CREATE TABLE IF NOT EXISTS part4_comprehension_responses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    question_id INT NOT NULL,
-    response_option INT NOT NULL COMMENT '1-4',
-    is_correct BOOLEAN NOT NULL,
-    reaction_time_ms INT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (question_id) REFERENCES comprehension_questions(id)
-);
-
--- Part 2: Story Reading & Comprehension
--- ==========================================
-
--- PRACTICE Tables
-DROP TABLE IF EXISTS part_b_practice_stories;
-CREATE TABLE IF NOT EXISTS part_b_practice_stories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    story_topic_id VARCHAR(50)
-);
-
-DROP TABLE IF EXISTS part_b_practice_segments;
-CREATE TABLE IF NOT EXISTS part_b_practice_segments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    story_id INT NOT NULL,
-    content TEXT NOT NULL,
-    segment_order INT NOT NULL,
-    text_id VARCHAR(50),
-    predictability VARCHAR(20),
-    predict_id INT,
-    sp2_con_id VARCHAR(50),
-    FOREIGN KEY (story_id) REFERENCES part_b_practice_stories(id) ON DELETE CASCADE
-);
-
-DROP TABLE IF EXISTS part_b_practice_actions;
-CREATE TABLE IF NOT EXISTS part_b_practice_actions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    story_id INT NOT NULL,
-    segment_id INT,
-    action_type ENUM('continue', 'switch', 'start_story') NOT NULL,
-    reading_time_ms INT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (story_id) REFERENCES part_b_practice_stories(id),
-    FOREIGN KEY (segment_id) REFERENCES part_b_practice_segments(id)
-);
-
-DROP TABLE IF EXISTS part_b_practice_summaries;
-CREATE TABLE IF NOT EXISTS part_b_practice_summaries (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    content TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
-);
-
-DROP TABLE IF EXISTS part_b_practice_questions;
-CREATE TABLE IF NOT EXISTS part_b_practice_questions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    story_id INT NOT NULL,
-    question_text TEXT NOT NULL,
-    question_order INT,
-    option_1 VARCHAR(255) NOT NULL,
-    option_2 VARCHAR(255) NOT NULL,
-    option_3 VARCHAR(255) NOT NULL,
-    option_4 VARCHAR(255) NOT NULL,
-    correct_option INT NOT NULL COMMENT '1-4',
-    FOREIGN KEY (story_id) REFERENCES part_b_practice_stories(id)
-);
-
-DROP TABLE IF EXISTS part_b_practice_responses;
-CREATE TABLE IF NOT EXISTS part_b_practice_responses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    question_id INT NOT NULL,
-    response_option INT NOT NULL COMMENT '1-4',
-    is_correct BOOLEAN NOT NULL,
-    reaction_time_ms INT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (question_id) REFERENCES part_b_practice_questions(id)
-);
-
--- FORMAL Tables
-DROP TABLE IF EXISTS part_b_formal_stories;
-CREATE TABLE IF NOT EXISTS part_b_formal_stories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    story_topic_id VARCHAR(50)
-);
-
-DROP TABLE IF EXISTS part_b_formal_segments;
-CREATE TABLE IF NOT EXISTS part_b_formal_segments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    story_id INT NOT NULL,
-    content TEXT NOT NULL,
-    segment_order INT NOT NULL,
-    text_id VARCHAR(50),
-    predictability VARCHAR(20),
-    predict_id INT,
-    sp2_con_id VARCHAR(50),
-    FOREIGN KEY (story_id) REFERENCES part_b_formal_stories(id) ON DELETE CASCADE
-);
-
-DROP TABLE IF EXISTS part_b_formal_actions;
-CREATE TABLE IF NOT EXISTS part_b_formal_actions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    story_id INT NOT NULL,
-    segment_id INT,
-    action_type ENUM('continue', 'switch', 'start_story') NOT NULL,
-    reading_time_ms INT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (story_id) REFERENCES part_b_formal_stories(id),
-    FOREIGN KEY (segment_id) REFERENCES part_b_formal_segments(id)
-);
-
-DROP TABLE IF EXISTS part_b_formal_summaries;
-CREATE TABLE IF NOT EXISTS part_b_formal_summaries (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    content TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
-);
-
-DROP TABLE IF EXISTS part_b_formal_questions;
-CREATE TABLE IF NOT EXISTS part_b_formal_questions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    story_id INT NOT NULL,
-    question_text TEXT NOT NULL,
-    question_order INT,
-    option_1 VARCHAR(255) NOT NULL,
-    option_2 VARCHAR(255) NOT NULL,
-    option_3 VARCHAR(255) NOT NULL,
-    option_4 VARCHAR(255) NOT NULL,
-    correct_option INT NOT NULL COMMENT '1-4',
-    FOREIGN KEY (story_id) REFERENCES part_b_formal_stories(id)
-);
-
-DROP TABLE IF EXISTS part_b_formal_responses;
-CREATE TABLE IF NOT EXISTS part_b_formal_responses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    question_id INT NOT NULL,
-    response_option INT NOT NULL COMMENT '1-4',
-    is_correct BOOLEAN NOT NULL,
-    reaction_time_ms INT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (question_id) REFERENCES part_b_formal_questions(id)
-); 
 
 
--- ==========================================
--- Part A: Comprehensive Questions
--- ==========================================
-
-DROP TABLE IF EXISTS part_a_questions;
-CREATE TABLE IF NOT EXISTS part_a_questions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    study_part_id INT,
-    sent_set INT,
-    text_id VARCHAR(50),
-    sent_order INT,
-    p1_con_id VARCHAR(50),
-    predict_id INT,
-    make_sense_id INT,
-    text_type_id INT,
-    gen_type_id INT,
-    question_text TEXT NOT NULL,
-    option_1 TEXT NOT NULL,
-    option_2 TEXT NOT NULL,
-    option_3 TEXT NOT NULL,
-    option_4 TEXT NOT NULL,
-    correct_ans VARCHAR(255),
-    correct_option INT COMMENT '1-4 (Legacy/index)'
-);
-
-DROP TABLE IF EXISTS part_a_responses;
-CREATE TABLE IF NOT EXISTS part_a_responses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    question_id INT NOT NULL,
-    response_option INT NOT NULL COMMENT '1-4',
-    is_correct BOOLEAN NOT NULL,
-    reaction_time_ms INT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id),
-    FOREIGN KEY (question_id) REFERENCES part_a_questions(id)
-);
-
-DROP TABLE IF EXISTS part_a_logs;
-CREATE TABLE IF NOT EXISTS part_a_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    set_id INT NOT NULL,
-    sentence_index INT NOT NULL,
-    word_index INT,
-    action_type VARCHAR(50) DEFAULT 'word_reveal',
-    reading_time_ms INT,
-    timestamp DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
-);
-
--- Seed Part A Questions (Mock)
-INSERT IGNORE INTO part_a_questions (question_text, option_1, option_2, option_3, option_4, correct_option) VALUES
-('What was the main theme of the sentences about the fox?', 'Laziness', 'Speed', 'Agility', 'Colors', 3),
-('Which object was mentioned as being watched?', 'Clock', 'Pot', 'Television', 'Bird', 2),
-('Who picked the pickled peppers?', 'Paul', 'Peter', 'Patrick', 'Phil', 2),
-('What did she sell by the seashore?', 'Seaweed', 'Sandcastles', 'Seashells', 'Surfboards', 3);
