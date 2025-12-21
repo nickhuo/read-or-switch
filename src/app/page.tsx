@@ -16,26 +16,123 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-lg glass-panel rounded-2xl p-10 shadow-sm transition-all duration-300">
-        <div className="text-center space-y-3 mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-            Informed Consent
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-4xl glass-panel rounded-2xl shadow-sm p-6 sm:p-8 lg:p-10">
+        {/* Header */}
+        <div className="text-center space-y-3 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--foreground)]">
+            Story Foraging Study
           </h1>
           <p className="text-[var(--muted)] text-base">
-            Please review the terms and provide your consent to participate.
+            Informed Consent Form
           </p>
         </div>
 
-        <div className="rounded-xl bg-[var(--input-bg)] p-6 mb-8 border border-[var(--border)]">
-          <p className="text-sm leading-relaxed text-[var(--foreground)]">
-            <strong className="block mb-2 font-medium">Study Terms</strong>
-            Participant agrees to the study terms. (This is a placeholder for the full consent text).
-            Your participation is voluntary and you may withdraw at any time.
-          </p>
+        {/* Scrollable Consent Content */}
+        <div className="max-h-[60vh] overflow-y-auto pr-2 mb-8 space-y-6 custom-scrollbar">
+          {/* Introduction */}
+          <section className="space-y-3">
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              You are being asked to participate in a voluntary research study. The purpose of this study is to understand how people learn information through reading and searching from multiple texts. In this study, you will fill out surveys, learn different topics, answer what you have learned, and complete cognitive ability measures. During the study, you will need to learn several topics under a limit of time. Some topics are more difficult than others. You can decide how you want to allocate your time. The goal is to learn as much as you can. After learning, you will need to report what you have learned and answer comprehension questions. You will receive additional bonus money if the accuracy of your comprehension questions is higher than 90%. Your participation will last about 60 minutes.
+            </p>
+          </section>
+
+          {/* Principal Investigator */}
+          <section className="rounded-xl bg-[var(--input-bg)] p-5 border border-[var(--border)]">
+            <h2 className="text-base font-semibold text-[var(--foreground)] mb-3">Principal Investigator</h2>
+            <div className="space-y-1 text-sm text-[var(--foreground)]">
+              <p><strong>Name and Title:</strong> Jessie Chin, Associate Professor</p>
+              <p><strong>Department and Institution:</strong> School of Information Sciences, University of Illinois Urbana-Champaign</p>
+              <p><strong>Contact Information:</strong> <a href="mailto:chin5@illinois.edu" className="text-[var(--primary)] hover:underline">chin5@illinois.edu</a></p>
+            </div>
+          </section>
+
+          {/* Procedures */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">What procedures are involved?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              The study procedures are:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-sm text-[var(--foreground)] ml-4">
+              <li>Completing a survey about your demographic information</li>
+              <li>Learning information online</li>
+              <li>Reporting what you have learned</li>
+              <li>Taking some cognitive ability tasks</li>
+            </ul>
+            <p className="text-sm leading-relaxed text-[var(--foreground)] mt-3">
+              During the online information learning task, you will do screen sharing with the researchers, so that the researchers will be able to monitor your progress. At the end of the learning task, you will be asked to recall what you have learned today as much as you can. When you start the recall, the Zoom meeting will be recorded (including the screen capture, your verbal response of free recall). The recall usually takes no more than 5 minutes. The recording will be turned off upon the completion of the recall. We will delete the video recording file (screen capture) right after the end of the study, and delete the audio recording files as soon as we complete the transcription of your recall response. No recording files will be stored for other uses.
+            </p>
+            <p className="text-sm leading-relaxed text-[var(--foreground)] font-medium">
+              The study will last about 60 minutes.
+            </p>
+          </section>
+
+          {/* Confidentiality */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">Will my study-related information be kept confidential?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              Faculty, students, and staff who may see your information will maintain confidentiality to the extent of laws and university policies. No personal identifiers will be collected. Participation is fully anonymous.
+            </p>
+          </section>
+
+          {/* Reimbursement */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">Will I be reimbursed for any expenses or paid for my participation in this research?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              You will be paid $15 after the completion of the study. In addition, you will receive $5 bonus if the accuracy of comprehension questions is higher than 90%.
+            </p>
+          </section>
+
+          {/* Withdrawal */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">Can I withdraw or be removed from the study?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              If you decide to participate, you are free to withdraw your consent and discontinue participation at any time. Your participation in this research is voluntary. Your decision whether or not to participate, or to withdraw after beginning participation, will not affect your current or future dealings with the University of Illinois Urbana-Champaign.
+            </p>
+          </section>
+
+          {/* Data Use */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">Will data collected from me be used for any other research?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              Your data will not be used or distributed for other research.
+            </p>
+          </section>
+
+          {/* Risks and Benefits */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">What are the risks and benefits of the study?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              The study will pose no more than minimal risk to you. There is a risk of loss of confidentiality, given that a portion of the Zoom meeting will be recorded. The study is self-paced, with no potential risk of fatigue more than the everyday activities. There is no potential direct benefit to you. However, for our society, the study will advance understandings in learning sciences and have implications for designing technologies to support learning on your own.
+            </p>
+          </section>
+
+          {/* Contact */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">Who should I contact if I have questions?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              Contact the researchers Jessie Chin, Associate Professor in Information Sciences, <a href="mailto:chin5@illinois.edu" className="text-[var(--primary)] hover:underline">chin5@illinois.edu</a> if you have any questions about this study or your part in it, or if you have concerns or complaints about the research.
+            </p>
+          </section>
+
+          {/* Rights */}
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-[var(--foreground)]">What are my rights as a research subject?</h2>
+            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+              If you have any questions about your rights as a research subject, including concerns, complaints, or to offer input, you may call the Office for the Protection of Research Subjects (OPRS) at <a href="tel:217-333-2670" className="text-[var(--primary)] hover:underline">217-333-2670</a> or e-mail OPRS at <a href="mailto:irb@illinois.edu" className="text-[var(--primary)] hover:underline">irb@illinois.edu</a>. If you would like to complete a brief survey to provide OPRS feedback about your experiences as a research participant, please follow the link here or through a link on the <a href="https://oprs.research.illinois.edu/" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] hover:underline">https://oprs.research.illinois.edu/</a>. You will have the option to provide feedback or concerns anonymously or you may provide your name and contact information for follow-up purposes.
+            </p>
+          </section>
+
+          {/* Print Notice */}
+          <section className="rounded-xl bg-[var(--input-bg)] p-4 border border-[var(--border)]">
+            <p className="text-xs text-[var(--muted)] italic">
+              Please print this consent form if you would like to retain a copy for your records.
+            </p>
+          </section>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Consent Form */}
+        <form onSubmit={handleSubmit} className="space-y-6 border-t border-[var(--border)] pt-6">
           <div className="space-y-2">
             <label
               htmlFor="participantId"
@@ -55,8 +152,11 @@ export default function Home() {
             />
           </div>
 
-          <div className="flex items-start gap-4 p-4 rounded-lg border border-transparent hover:bg-[var(--input-bg)] transition-colors -mx-4 cursor-pointer" onClick={() => setConsented(!consented)}>
-            <div className="flex h-6 items-center">
+          <label 
+            htmlFor="consent"
+            className="flex items-start gap-4 p-4 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] hover:bg-[var(--input-bg)]/80 transition-colors cursor-pointer"
+          >
+            <div className="flex h-6 items-center pt-0.5">
               <input
                 id="consent"
                 name="consent"
@@ -67,22 +167,22 @@ export default function Home() {
                 className="h-5 w-5 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]/20 cursor-pointer"
               />
             </div>
-            <div className="text-sm">
-              <label htmlFor="consent" className="font-medium text-[var(--foreground)] cursor-pointer">
-                Yes, I consent
-              </label>
-              <p className="text-[var(--muted)] mt-1">
-                I have read and understood the terms of this study.
+            <div className="text-sm flex-1">
+              <span className="font-medium text-[var(--foreground)] cursor-pointer block mb-1">
+                I have read and understand the above consent form.
+              </span>
+              <p className="text-[var(--muted)] leading-relaxed">
+                I certify that I am a native speaker of English, and aged 18 years old or older. By clicking the &ldquo;Submit&rdquo; button to enter the survey, I indicate my willingness to voluntarily take part in this study.
               </p>
             </div>
-          </div>
+          </label>
 
           <button
             type="submit"
             disabled={!consented || !participantId}
-            className="flex w-full justify-center rounded-lg bg-[var(--primary)] px-4 py-3 text-sm font-medium text-[var(--primary-fg)] shadow-sm hover:opacity-90 active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+            className="flex w-full justify-center rounded-lg bg-[var(--primary)] px-6 py-3 text-base font-medium text-[var(--primary-fg)] shadow-sm hover:opacity-90 active:scale-[0.99] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            Start Experiment
+            Submit
           </button>
         </form>
       </div>
