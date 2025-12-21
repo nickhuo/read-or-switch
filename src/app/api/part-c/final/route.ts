@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
         for (const r of responses) {
             await query(
-                `INSERT INTO part4_comprehension_responses 
+                `INSERT INTO part_c_formal_responses 
                 (participant_id, question_id, response_option, is_correct, reaction_time_ms) 
                 VALUES (?, ?, ?, ?, ?)`,
                 [participantId, r.questionId, r.responseIndex, r.isCorrect, r.reactionTimeMs]

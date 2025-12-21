@@ -479,6 +479,7 @@ CREATE TABLE `part_c_letter_item` (
     `correct_answer` char(1) NOT NULL,
     `response` char(1) NOT NULL,
     `is_correct` tinyint(1) NOT NULL,
+    `reaction_time_ms` int(11) NOT NULL DEFAULT 0,
     `created_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     `updated_at` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (`id`),
