@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
         // 1. Insert Participant (with conditions)
         const part2Condition = Math.floor(Math.random() * 2); // 0 or 1
-        const part3Condition = Math.floor(Math.random() * 3); // 0, 1, or 2
+        const part3Condition = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
 
         try {
             await connection.execute(

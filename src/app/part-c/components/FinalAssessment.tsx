@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
+import { Question } from "../../part-b/types";
 
 interface FinalAssessmentProps {
     participantId: string;
@@ -9,70 +10,103 @@ interface FinalAssessmentProps {
 }
 
 interface FinalResponseData {
-    questionId: number;
+    questionId: string;
     responseIndex: number;
     isCorrect: boolean;
     reactionTimeMs: number;
 }
 
-// Mock Data
-const finalQuestions = [
-    {
-        id: 1,
-        text: "A medical supplier is interested in understanding the market size of bone graft material. What kind of population may be in the market?",
-        options: [
-            "an athlete with severe fractures",
-            "a retiree with significant bone loss",
-            "a patient suffering from cancer",
-            "all of the above"
-        ],
-        correctOption: 4
-    },
-    {
-        id: 2,
-        text: "A tissue banks is responsible for screening the medical histories of the donors and freeze the donated bones (T/F)",
-        options: ["TRUE", "FALSE"],
-        correctOption: 1
-    },
-    {
-        id: 3,
-        text: "What could be a risk that is associated with surgical procedure of bone graft?",
-        options: ["osteoporosis", "infection", "muscle atrophy", "nerve damage"],
-        correctOption: 2
-    },
-    {
-        id: 4,
-        text: "Due to ethical concerns, all bone graft materials can only come from donors who have died (T/F)",
-        options: ["TRUE", "FALSE"],
-        correctOption: 2
-    }
-];
-
 export default function FinalAssessment({ participantId, onComplete }: FinalAssessmentProps) {
-    const [responses, setResponses] = useState<Record<number, string>>({});
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [responses, setResponses] = useState<Record<string, string>>({});
     const [responseData, setResponseData] = useState<FinalResponseData[]>([]);
     const startTimeRef = useRef(0);
     const [isDone, setIsDone] = useState(false);
     const [accuracy, setAccuracy] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         startTimeRef.current = performance.now();
-    }, []);
 
-    const handleResponse = (event: ChangeEvent<HTMLInputElement>, id: number, val: string) => {
+        // Fetch questions for this participant (based on what they read in Formal phase)
+        fetch(`/api/part-c/questions?phase=formal&participantId=${participantId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setQuestions(data);
+                } else {
+                    console.error("Failed to load questions", data);
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
+    }, [participantId]);
+
+    const handleResponse = (event: ChangeEvent<HTMLInputElement>, id: string | number, val: string) => {
+        const questionId = String(id);
         const reactionTime = startTimeRef.current ? event.timeStamp - startTimeRef.current : 0;
 
-        setResponses(prev => ({ ...prev, [id]: val }));
+        setResponses(prev => ({ ...prev, [questionId]: val }));
 
         setResponseData(prev => {
-            const filtered = prev.filter(p => p.questionId !== id);
-            // Map strict string to index 1-4
-            const q = finalQuestions.find(qq => qq.id === id);
-            const index = q ? q.options.indexOf(val) + 1 : 0;
-            const isCorrect = q ? (index === q.correctOption) : false;
+            const filtered = prev.filter(p => p.questionId !== questionId);
+            const q = questions.find(qq => String(qq.id) === questionId); // Use 'id' from Question type (which might be story_id? No, Question type usually has id or questionID)
+
+            // Note: Question interface in part-b/types usually has 'id'. 
+            // In DB it is questionID. The query returns columns.
+            // If API returns `select *`, it returns `questionID`.
+            // Let's assume the API returns objects with `questionID` (or mapped to id if Question type mandates it).
+            // However, previous usage in FormalTask implied `Question` type is used.
+            // The API response is raw DB rows unless mapped.
+            // Raw DB: questionID, choiceA, choiceB...
+            // FormalTask uses `option_1`, `option_2`? 
+            // Let's check part_c_questions columns again.
+            // questionID, choiceA, choiceB, choiceC, choiceD, correctAns.
+
+            // I need to map DB columns to what `FinalAssessment` expects or update `FinalAssessment` to stick to DB columns.
+
+            // The DB columns: choiceA, choiceB...
+            // The Question type (if shared) might expect option_1...
+            // Let's adapt here.
+
+            let isCorrect = false;
+            let index = 0;
+
+            if (q) {
+                // Determine index of selected val
+                // Options are q.choiceA, q.choiceB ...
+                // or q.option_1 if mapped.
+                // Let's handle generic property access or map previously.
+
+                // Better: Map data on fetch.
+
+                // But for now inside this function:
+                // Assuming q has choiceA...D
+                const options = [
+                    (q as any).choiceA || (q as any).option_1,
+                    (q as any).choiceB || (q as any).option_2,
+                    (q as any).choiceC || (q as any).option_3,
+                    (q as any).choiceD || (q as any).option_4
+                ];
+
+                index = options.indexOf(val) + 1;
+
+                // correctAns in DB is 'A', 'B', 'C', or '1', '2'?
+                // Schema says varchar(10).
+                // If it's 'A', 'B', etc. we need mapping.
+
+                const correctVal = (q as any).correctAns || (q as any).correct_option;
+                if (typeof correctVal === 'number' || (typeof correctVal === 'string' && !isNaN(parseInt(correctVal)))) {
+                    isCorrect = index === parseInt(String(correctVal));
+                } else {
+                    // map A->1, B->2...
+                    const map: Record<string, number> = { A: 1, B: 2, C: 3, D: 4 };
+                    isCorrect = index === map[correctVal as string];
+                }
+            }
 
             return [...filtered, {
-                questionId: id,
+                questionId: questionId,
                 responseIndex: index,
                 isCorrect: isCorrect,
                 reactionTimeMs: reactionTime
@@ -88,11 +122,9 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
                 body: JSON.stringify({ participantId, responses: responseData })
             });
 
-            // Calculate accuracy
             const correctCount = responseData.filter(r => r.isCorrect).length;
-            const total = finalQuestions.length; // Use total questions, not just answered? Or answered. 
-            // Ideally should enforce all answered. Assuming they did.
-            setAccuracy(Math.round((correctCount / total) * 100));
+            const total = questions.length;
+            setAccuracy(total > 0 ? Math.round((correctCount / total) * 100) : 0);
 
             setIsDone(true);
             onComplete();
@@ -102,12 +134,17 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
         }
     };
 
-    // const accuracy = 75; // Removed mock
-    // Actually onComplete usually moves parent to next phase or summary. 
-    // If Part B is done, maybe show results here or redirect?
-    // Requirement: "Results page showing accuracy percentage"
-    // So we should calculate accuracy locally or fetch it.
-    // For now, I'll keep the mock Accuracy view logic but trigger it after save.
+    if (loading) return <div className="p-10 text-center">Loading questions...</div>;
+
+    if (questions.length === 0) {
+        return (
+            <div className="max-w-xl mx-auto glass-panel p-12 rounded-xl shadow-sm mt-12 text-center">
+                <h2 className="text-2xl font-semibold mb-4 text-[var(--foreground)]">No Questions Found</h2>
+                <p className="text-[var(--muted)] mb-8">It seems you haven't read any articles that have associated comprehension questions.</p>
+                <button onClick={onComplete} className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg">Continue</button>
+            </div>
+        );
+    }
 
     if (isDone) {
         return (
@@ -129,33 +166,43 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
                 This is the final task! The multiple-choice questions here are based on the passages you read in the formal task.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {finalQuestions.map((q) => (
-                    <div key={q.id} className="border border-[var(--border)] p-6 rounded-lg bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
-                        <div className="border-l-4 border-[var(--foreground)] pl-3 mb-4">
-                            <h3 className="font-semibold text-[var(--foreground)]">Question {q.id}</h3>
-                        </div>
-                        <p className="mb-6 text-[var(--foreground)] font-medium leading-relaxed min-h-[60px]">{q.text}</p>
+            <div className="grid grid-cols-1 gap-8">
+                {questions.map((q: any, idx) => {
+                    const qId = q.questionID || q.id;
+                    const options = [
+                        q.choiceA || q.option_1,
+                        q.choiceB || q.option_2,
+                        q.choiceC || q.option_3,
+                        q.choiceD || q.option_4
+                    ].filter(Boolean); // Filter out undefined if schema varies
 
-                        <div className="space-y-3">
-                            {q.options.map((opt, idx) => (
-                                <label key={idx} className={`block border p-3 rounded-lg cursor-pointer transition-colors ${responses[q.id] === opt ? "bg-[var(--input-bg)] border-[var(--primary)]/50 ring-1 ring-[var(--primary)]/20" : "hover:bg-[var(--input-bg)] border-[var(--border)]"}`}>
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="radio"
-                                            name={`q-${q.id}`}
-                                            value={opt}
-                                            checked={responses[q.id] === opt}
-                                            onChange={(event) => handleResponse(event, q.id, opt)}
-                                            className="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]"
-                                        />
-                                        <span className="text-sm font-medium text-[var(--foreground)]/90">{opt}</span>
-                                    </div>
-                                </label>
-                            ))}
+                    return (
+                        <div key={qId} className="border border-[var(--border)] p-6 rounded-lg bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
+                            <div className="border-l-4 border-[var(--foreground)] pl-3 mb-4">
+                                <h3 className="font-semibold text-[var(--foreground)]">Question {idx + 1}</h3>
+                            </div>
+                            <p className="mb-6 text-[var(--foreground)] font-medium leading-relaxed min-h-[60px]">{q.questionText || q.question_text || q.text}</p>
+
+                            <div className="space-y-3">
+                                {options.map((opt, i) => (
+                                    <label key={i} className={`block border p-3 rounded-lg cursor-pointer transition-colors ${responses[qId] === opt ? "bg-[var(--input-bg)] border-[var(--primary)]/50 ring-1 ring-[var(--primary)]/20" : "hover:bg-[var(--input-bg)] border-[var(--border)]"}`}>
+                                        <div className="flex items-center gap-3">
+                                            <input
+                                                type="radio"
+                                                name={`q-${qId}`}
+                                                value={opt}
+                                                checked={responses[qId] === opt}
+                                                onChange={(event) => handleResponse(event, qId, opt)}
+                                                className="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]"
+                                            />
+                                            <span className="text-sm font-medium text-[var(--foreground)]/90">{opt}</span>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="text-center mt-12 mb-8">
