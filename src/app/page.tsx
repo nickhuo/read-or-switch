@@ -28,8 +28,8 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Scrollable Consent Content */}
-        <div className="max-h-[60vh] overflow-y-auto pr-2 mb-8 space-y-6 custom-scrollbar">
+        {/* Consent Content */}
+        <div className="mb-8 space-y-6">
           {/* Introduction */}
           <section className="space-y-3">
             <p className="text-sm leading-relaxed text-[var(--foreground)]">
@@ -118,7 +118,7 @@ export default function Home() {
           {/* Rights */}
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-[var(--foreground)]">What are my rights as a research subject?</h2>
-            <p className="text-sm leading-relaxed text-[var(--foreground)]">
+          <p className="text-sm leading-relaxed text-[var(--foreground)]">
               If you have any questions about your rights as a research subject, including concerns, complaints, or to offer input, you may call the Office for the Protection of Research Subjects (OPRS) at <a href="tel:217-333-2670" className="text-[var(--primary)] hover:underline">217-333-2670</a> or e-mail OPRS at <a href="mailto:irb@illinois.edu" className="text-[var(--primary)] hover:underline">irb@illinois.edu</a>. If you would like to complete a brief survey to provide OPRS feedback about your experiences as a research participant, please follow the link here or through a link on the <a href="https://oprs.research.illinois.edu/" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] hover:underline">https://oprs.research.illinois.edu/</a>. You will have the option to provide feedback or concerns anonymously or you may provide your name and contact information for follow-up purposes.
             </p>
           </section>
@@ -127,7 +127,7 @@ export default function Home() {
           <section className="rounded-xl bg-[var(--input-bg)] p-4 border border-[var(--border)]">
             <p className="text-xs text-[var(--muted)] italic">
               Please print this consent form if you would like to retain a copy for your records.
-            </p>
+          </p>
           </section>
         </div>
 
