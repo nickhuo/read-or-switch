@@ -9,9 +9,7 @@ function DemographicsForm() {
     const participantId = searchParams.get("participant_id");
 
     const [formData, setFormData] = useState({
-        dobMonth: "",
-        dobDay: "",
-        dobYear: "",
+        dob: "",
         age: "",
         gender: "",
         education: "",
@@ -58,12 +56,16 @@ function DemographicsForm() {
         setIsSubmitting(true);
 
         try {
+            const [dobYear, dobMonth, dobDay] = formData.dob.split("-");
             const res = await fetch("/api/demographics", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     participantId,
                     ...formData,
+                    dobYear,
+                    dobMonth,
+                    dobDay,
                 }),
             });
 
@@ -103,29 +105,12 @@ function DemographicsForm() {
                     {/* Date of Birth */}
                     <div className={sectionClass}>
                         <label className={labelClass}>Date of Birth</label>
-                        <div className="flex gap-4">
+                        <div>
                             <input
-                                type="number"
-                                placeholder="MM"
-                                className={`${inputClass} w-24`}
-                                value={formData.dobMonth}
-                                onChange={(e) => setFormData({ ...formData, dobMonth: e.target.value })}
-                                required
-                            />
-                            <input
-                                type="number"
-                                placeholder="DD"
-                                className={`${inputClass} w-24`}
-                                value={formData.dobDay}
-                                onChange={(e) => setFormData({ ...formData, dobDay: e.target.value })}
-                                required
-                            />
-                            <input
-                                type="number"
-                                placeholder="YYYY"
-                                className={`${inputClass} w-32`}
-                                value={formData.dobYear}
-                                onChange={(e) => setFormData({ ...formData, dobYear: e.target.value })}
+                                type="date"
+                                className={`${inputClass} max-w-xs`}
+                                value={formData.dob}
+                                onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
                                 required
                             />
                         </div>
