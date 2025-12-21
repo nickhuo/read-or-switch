@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function DemographicsForm() {
@@ -53,7 +53,26 @@ function DemographicsForm() {
             return;
         }
 
+        // Validate age > 18
+        if (formData.dob) {
+            const birthDate = new Date(formData.dob);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            // Adjust age if birthday hasn't occurred this year
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age <= 18) {
+                setError("You must be older than 18 years old to participate in this study.");
+                return;
+            }
+        }
+
         setIsSubmitting(true);
+        setError(""); // Clear any previous errors
 
         try {
             const [dobYear, dobMonth, dobDay] = formData.dob.split("-");
@@ -104,9 +123,10 @@ function DemographicsForm() {
                 <form onSubmit={handleSubmit} className="space-y-10">
                     {/* Date of Birth */}
                     <div className={sectionClass}>
-                        <label className={labelClass}>Date of Birth</label>
+                        <label htmlFor="dob" className={labelClass}>Date of Birth</label>
                         <div>
                             <input
+                                id="dob"
                                 type="date"
                                 className={`${inputClass} max-w-xs`}
                                 value={formData.dob}
@@ -118,11 +138,12 @@ function DemographicsForm() {
 
                     {/* Gender */}
                     <div className={sectionClass}>
-                        <label className={labelClass}>Gender</label>
+                        <label htmlFor="gender-male" className={labelClass}>Gender</label>
                         <div className="flex gap-6">
                             {["Male", "Female"].map((g) => (
                                 <label key={g} className="inline-flex items-center cursor-pointer">
                                     <input
+                                        id={g === "Male" ? "gender-male" : undefined}
                                         type="radio"
                                         name="gender"
                                         value={g}
@@ -139,7 +160,7 @@ function DemographicsForm() {
 
                     {/* Education */}
                     <div className={sectionClass}>
-                        <label className={labelClass}>
+                        <label htmlFor="education-1" className={labelClass}>
                             Using the scale below, how many years of formal education did you complete?
                         </label>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-4">
@@ -155,6 +176,7 @@ function DemographicsForm() {
                             ].map((opt) => (
                                 <label key={opt.val} className="flex items-center hover:bg-[var(--input-bg)] -mx-2 px-2 py-1 rounded-md transition-colors cursor-pointer">
                                     <input
+                                        id={opt.val === "1" ? "education-1" : undefined}
                                         type="radio"
                                         name="education"
                                         value={opt.val}
@@ -171,11 +193,12 @@ function DemographicsForm() {
 
                     {/* Native Speaker */}
                     <div className={sectionClass}>
-                        <label className={labelClass}>Are you a native speaker of English?</label>
+                        <label htmlFor="nativeSpeaker-yes" className={labelClass}>Are you a native speaker of English?</label>
                         <div className="flex gap-6 mt-3">
                             {["Yes", "No"].map((opt) => (
                                 <label key={opt} className="inline-flex items-center cursor-pointer">
                                     <input
+                                        id={opt === "Yes" ? "nativeSpeaker-yes" : undefined}
                                         type="radio"
                                         name="nativeSpeaker"
                                         value={opt}
@@ -192,9 +215,10 @@ function DemographicsForm() {
                         {/* First Language (Conditional) */}
                         {formData.nativeSpeaker === "No" && (
                             <div className="mt-6 pt-6 border-t border-[var(--border)]">
-                                <label className={labelClass}>If not, what is your first language?</label>
+                                <label htmlFor="firstLanguage" className={labelClass}>If not, what is your first language?</label>
                                 <div className="mt-2 space-y-3">
                                     <select
+                                        id="firstLanguage"
                                         className={inputClass}
                                         value={[
                                             "Chinese", "Spanish", "Hindi", "Arabic", "Portuguese",
@@ -248,7 +272,7 @@ function DemographicsForm() {
 
                     {/* Proficiency */}
                     <div className={sectionClass}>
-                        <label className={labelClass}>
+                        <label htmlFor="proficiency-reading-1" className={labelClass}>
                             How would you rate your overall proficiency in English? (1 = Not proficient, 7 = Native-level)
                         </label>
                         <div className="mt-6 space-y-6">
@@ -260,6 +284,7 @@ function DemographicsForm() {
                                             <label key={num} className="flex flex-col items-center cursor-pointer group">
                                                 <span className="mb-2 text-xs text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors">{num}</span>
                                                 <input
+                                                    id={skill === "Reading" && num === 1 ? "proficiency-reading-1" : undefined}
                                                     type="radio"
                                                     name={`proficiency_${skill}`}
                                                     value={num}
@@ -278,11 +303,12 @@ function DemographicsForm() {
 
                     {/* Ethnicity */}
                     <div className={sectionClass}>
-                        <label className={labelClass}>Are you Hispanic or Latino?</label>
+                        <label htmlFor="isHispanic-yes" className={labelClass}>Are you Hispanic or Latino?</label>
                         <div className="flex gap-6 mt-3">
                             {["Yes", "No"].map((opt) => (
                                 <label key={opt} className="inline-flex items-center cursor-pointer">
                                     <input
+                                        id={opt === "Yes" ? "isHispanic-yes" : undefined}
                                         type="radio"
                                         name="isHispanic"
                                         value={opt}
@@ -298,7 +324,7 @@ function DemographicsForm() {
                     </div>
 
                     <div className={sectionClass}>
-                        <label className={labelClass}>
+                        <label htmlFor="race-native" className={labelClass}>
                             Please check one of the following ethnic or racial categories that best describe you.
                         </label>
                         <div className="mt-4 space-y-3">
@@ -311,6 +337,7 @@ function DemographicsForm() {
                             ].map((race) => (
                                 <label key={race} className="flex items-center hover:bg-[var(--input-bg)] -mx-2 px-2 py-1 rounded-md transition-colors cursor-pointer">
                                     <input
+                                        id={race === "Native American/Alaska Native" ? "race-native" : undefined}
                                         type="radio"
                                         name="race"
                                         value={race}

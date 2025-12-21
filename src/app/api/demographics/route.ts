@@ -101,23 +101,57 @@ export async function POST(request: Request) {
         // 3. Insert Knowledge Ratings
         await connection.execute("DELETE FROM participant_knowledge WHERE participant_id = ?", [participantId]);
 
-        // Fetch topics from Part B and Part C
+        // Fetch topics from Part B and Part C Subtopics ONLY
         const [topicsB] = await connection.query<RowDataPacket[]>("SELECT id, title FROM part_b_topic");
-        const [topicsC] = await connection.query<RowDataPacket[]>("SELECT topID as id, topTitle as title FROM part_c_topic");
-        const [topicsCPrac] = await connection.query<RowDataPacket[]>("SELECT topID as id, topTitle as title FROM part_c_prac_topic");
+        const [subtopicsC] = await connection.query<RowDataPacket[]>("SELECT subtopID as id, subtopTitle as title FROM part_c_subtopic");
 
         const topicMap = new Map<string, string>();
 
-        topicsB.forEach((t: any) => topicMap.set(t.title, t.id));
-        topicsC.forEach((t: any) => topicMap.set(t.title, t.id));
-        topicsCPrac.forEach((t: any) => topicMap.set(t.title, t.id));
+        const normalize = (s: string) => s.trim().toLowerCase();
+
+        const addTopicsToMap = (topics: any[]) => {
+            topics.forEach((t) => {
+                if (t.title && t.id) {
+                    topicMap.set(normalize(t.title), t.id); // Map Name -> ID? Or Name -> Name? 
+                    // User asked "topic id to topic". If the column is `topic`, we should probably store the ID if available, or the NAME?
+                    // Usually `topic` column implies the NAME. `topic_id` implies ID.
+                    // But if I store ID in `topic` column, it's just a rename.
+                    // If I store NAME in `topic` column, then I map Name -> Name.
+                    // "change the schema ... topic id to topic" + "participant knowledge didn't record"
+                    // If I store the ID, I maintain the foreign key relationship logic (conceptually).
+                    // However, let's look at `part_b_topic` IDs (T1, T2...) and `part_c_subtopic` IDs (101, 102...).
+                    // Storing IDs seems safer for uniqueness. I will continue to store IDs in the `topic` column.
+                    // If the user meant "store the text topic", they would usually say "change type to text" or "store name".
+                    // Given the ambiguity, I'll stick to storing the ID which was the previous working state, just column renamed.
+                }
+            });
+        };
+
+        addTopicsToMap(topicsB);
+        addTopicsToMap(subtopicsC);
 
         for (const [topicName, rating] of Object.entries(knowledge)) {
-            const topicId = topicMap.get(topicName);
-            if (topicId) {
+            const normalizedName = normalize(topicName);
+            let topicValue = topicMap.get(normalizedName);
+
+            // Try singular/plural variations if not found
+            if (!topicValue) {
+                if (normalizedName.endsWith('s')) {
+                    topicValue = topicMap.get(normalizedName.slice(0, -1));
+                } else {
+                    topicValue = topicMap.get(normalizedName + 's');
+                }
+            }
+
+            // Fallback: use the name itself if no ID found
+            if (!topicValue) {
+                topicValue = topicName;
+            }
+
+            if (topicValue) {
                 await connection.execute(
-                    "INSERT INTO participant_knowledge (participant_id, topic_id, rating) VALUES (?, ?, ?)",
-                    [participantId, topicId, rating]
+                    "INSERT INTO participant_knowledge (participant_id, subtopic_title, rating) VALUES (?, ?, ?)",
+                    [participantId, topicValue, rating]
                 );
             }
         }

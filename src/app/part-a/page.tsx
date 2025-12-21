@@ -240,21 +240,63 @@ function PartAContent() {
                     {/* SPR View - Always visible to maintain layout, but changes state in decision phase */}
                     <div className="max-w-4xl w-full">
                         <div className="glass-panel p-16 rounded-2xl shadow-sm min-h-[400px] flex flex-col justify-center items-center">
-                            <div className="flex flex-wrap justify-center gap-x-4 gap-y-8 text-3xl font-mono leading-loose max-w-3xl">
+                            <div 
+                                className="text-3xl font-mono leading-loose max-w-3xl"
+                                style={{
+                                    // Use CSS Grid for more stable layout
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(0, max-content))',
+                                    justifyContent: 'center',
+                                    gap: '2rem 1rem', // gap-y gap-x
+                                    // Prevent layout recalculation during transitions
+                                    willChange: 'auto',
+                                    // Ensure stable rendering
+                                    contain: 'layout',
+                                }}
+                            >
                                 {words.map((word, index) => {
                                     // In decision phase, we hide everything (or show all underscores).
                                     // User said "don't reveal the whole sentence". 
                                     const isVisible = readingPhase === "word-by-word" && index === currentWordIndex;
+                                    // In decision phase, all words should show as underscores
+                                    const showWord = readingPhase === "decision" ? false : isVisible;
+                                    
+                                    // Calculate fixed width to prevent layout shift
+                                    // Use a more generous width calculation to accommodate all characters and padding
+                                    // Account for font-medium which makes characters slightly wider
+                                    const baseWidth = Math.max(word.length * 0.8, 3); // Base width in em, minimum 3em
+                                    const paddingWidth = 0.5; // px-2 = 0.5rem = 0.5em at base font size
+                                    const fixedWidth = `${baseWidth + paddingWidth * 2}em`;
 
                                     return (
                                         <span
-                                            key={index}
-                                            className={`transition-all duration-200 ${isVisible
-                                                ? "text-[var(--foreground)] font-medium bg-[var(--input-bg)] px-2 -mx-2 rounded"
-                                                : "text-[var(--border)]"
-                                                }`}
+                                            key={`word-${index}-${word}`}
+                                            className="inline-block px-2 -mx-2 text-center font-medium rounded"
+                                            style={{
+                                                // Use fixed width to prevent any layout shift
+                                                width: fixedWidth,
+                                                minWidth: fixedWidth,
+                                                maxWidth: fixedWidth,
+                                                height: '1.5em', // Fixed height to prevent vertical shift
+                                                boxSizing: 'border-box',
+                                                // Prevent text selection from causing layout issues
+                                                userSelect: 'none',
+                                                // Ensure consistent rendering and prevent layout shifts
+                                                contain: 'layout style size',
+                                                // Force hardware acceleration for smoother transitions
+                                                transform: 'translateZ(0)',
+                                                // Use CSS variables for smooth color transitions
+                                                color: showWord ? 'var(--foreground)' : 'var(--border)',
+                                                backgroundColor: showWord ? 'var(--input-bg)' : 'transparent',
+                                                // Smooth transition only for colors, not layout
+                                                transition: 'color 200ms ease, background-color 200ms ease',
+                                                // Ensure text is vertically centered
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}
                                         >
-                                            {isVisible
+                                            {showWord
                                                 ? word
                                                 : "_".repeat(word.length)}
                                         </span>
