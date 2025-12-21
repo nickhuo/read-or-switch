@@ -1,7 +1,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import mysql from 'mysql2/promise';
+import mysql, { type ResultSetHeader } from 'mysql2/promise';
 
 const envPath = path.resolve(process.cwd(), '.env.local');
 console.log(`Loading env from ${envPath}`);
@@ -184,7 +184,15 @@ async function populatePartB(connection: mysql.Connection) {
         // Map StoryLabel (T1P1) -> { topicId: string, title: string, predictability: string }
         const stories = new Map<string, { topicId: string, title: string, predictability: string }>();
         // Segments
-        const segments: any[] = [];
+        const segments: Array<{
+            storyLabel: string;
+            content: string;
+            segmentOrder: number;
+            textId: string;
+            predictability: string;
+            predictId: number;
+            sp2ConId: string;
+        }> = [];
 
         for (const cols of rows) {
             // Cols: StudyPartID, StoryTopicID, Predictability, PredictID, TextID, SP2ConID, StoryTitle, Order, StoryText
@@ -234,10 +242,10 @@ async function populatePartB(connection: mysql.Connection) {
         // Insert Stories and keep map of label -> db_id
         const storyLabelToId = new Map<string, number>();
         for (const [label, data] of stories) {
-            const [res]: any = await connection.execute(
+            const [res] = await connection.execute(
                 'INSERT INTO part_b_formal_stories (topic_id, title, story_label) VALUES (?, ?, ?)',
                 [data.topicId, data.title, label]
-            );
+            ) as [ResultSetHeader, mysql.FieldPacket[]];
             storyLabelToId.set(label, res.insertId);
         }
         console.log(`Inserted ${stories.size} Part B Formal Stories.`);
@@ -307,7 +315,13 @@ async function populatePartB(connection: mysql.Connection) {
         const rows = parseCSV(content).slice(1);
 
         const pTopics = new Map<string, string>(); // ID -> Title
-        const pSegments: any[] = [];
+        const pSegments: Array<{
+            topicId: string;
+            title: string;
+            textId: string;
+            order: number;
+            text: string;
+        }> = [];
 
         for (const cols of rows) {
             // Cols: PartID, StoryTopicID, TextID, StoryTitle, Order, StoryText
@@ -339,10 +353,10 @@ async function populatePartB(connection: mysql.Connection) {
         // Insert Practice Stories (One per topic)
         const practiceLabelToId = new Map<string, number>();
         for (const [id, title] of pTopics) {
-            const [res]: any = await connection.execute(
+            const [res] = await connection.execute(
                 'INSERT INTO part_b_practice_stories (topic_id, title, story_label) VALUES (?, ?, ?)',
                 [id, title, id] // Use ID as label
-            );
+            ) as [ResultSetHeader, mysql.FieldPacket[]];
             practiceLabelToId.set(id, res.insertId);
         }
 
@@ -371,7 +385,7 @@ async function populatePartC(connection: mysql.Connection) {
     await connection.query("SET FOREIGN_KEY_CHECKS = 0");
 
     // Helper to read CSV and insert data
-    const seedTable = async (fileName: string, tableName: string, columns: string[], mapFn?: (cols: string[]) => any[]) => {
+    const seedTable = async (fileName: string, tableName: string, columns: string[], mapFn?: (cols: string[]) => string[]) => {
         const filePath = path.resolve(process.cwd(), `docs/Study Material/${fileName}`);
         if (fs.existsSync(filePath)) {
             console.log(`Reading ${filePath}...`);
@@ -540,7 +554,7 @@ async function populatePartC(connection: mysql.Connection) {
 async function main() {
     console.log('Connecting to database...');
 
-    let connection;
+    let connection: mysql.Connection | undefined;
     try {
         connection = await mysql.createConnection(dbConfig);
         console.log('Connected.');
@@ -555,7 +569,7 @@ async function main() {
             const statement = statements[i];
             try {
                 await connection.query(statement);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 // Ignore
             }
         }
