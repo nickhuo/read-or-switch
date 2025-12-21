@@ -32,15 +32,9 @@ CREATE TABLE IF NOT EXISTS demographics (
 DROP TABLE IF EXISTS participant_knowledge;
 CREATE TABLE IF NOT EXISTS participant_knowledge (
     participant_id BIGINT,
-<<<<<<< Current (Your changes)
     subtopic_title VARCHAR(255),
     rating INT COMMENT '1-7 scale',
     PRIMARY KEY (participant_id, subtopic_title),
-=======
-    topic VARCHAR(255),
-    rating INT COMMENT '1-7 scale',
-    PRIMARY KEY (participant_id, topic),
->>>>>>> Incoming (Background Agent changes)
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
 );
 
