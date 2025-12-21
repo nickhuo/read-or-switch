@@ -217,13 +217,13 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                     {currentProblems.map((prob, idx) => {
                         const absoluteId = idOffset + idx + 1;
                         return (
-                            <div key={absoluteId} className="flex items-center justify-between border border-[var(--border)] rounded-lg p-5 bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
-                                <div className="flex items-center gap-4 flex-1">
+                            <div key={absoluteId} className="grid grid-cols-[1fr_120px_1fr] items-center border border-[var(--border)] rounded-lg p-5 bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
+                                <div className="flex items-center justify-between pr-4 w-full">
                                     <span className="font-mono text-[var(--muted)] text-sm w-6">{absoluteId}.</span>
-                                    <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.left}</span>
+                                    <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)] text-right">{prob.left}</span>
                                 </div>
 
-                                <div className="flex gap-3 mx-4">
+                                <div className="flex justify-center gap-3">
                                     <button
                                         onClick={(event) => handleLetterResponse(event, absoluteId, "S", prob)}
                                         className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[absoluteId] === "S"
@@ -240,7 +240,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                                     >D</button>
                                 </div>
 
-                                <div className="flex-1 text-right">
+                                <div className="text-left pl-4 w-full">
                                     <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.right}</span>
                                 </div>
                             </div>
