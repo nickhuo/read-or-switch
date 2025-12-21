@@ -180,18 +180,18 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
 
     if (view === "reading" && currentStory) {
         return (
-            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 relative border border-[var(--border)]">
+            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 relative border border-[var(--border)] min-h-[500px] flex flex-col">
                 <div className="absolute top-6 right-8 font-mono font-medium text-[var(--muted)] text-sm bg-[var(--input-bg)] px-2 py-1 rounded">
                     {formatTime(timeLeft)}
                 </div>
 
                 <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest mb-6 text-center">{currentStory.title}</h3>
 
-                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] min-h-[200px] font-sans">
+                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] flex-grow font-sans">
                     {segments[currentSegmentIndex]?.content}
                 </div>
 
-                <div className="flex justify-between gap-6 mt-4">
+                <div className="flex justify-between gap-6 mt-auto">
                     <button
                         onClick={handleSwitch}
                         className="flex-1 px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"

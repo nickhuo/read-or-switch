@@ -26,7 +26,7 @@ function PartAContent() {
     const participantId = searchParams.get("participant_id");
 
     // States
-    const [step, setStep] = useState<"instructions" | "reading" | "summary" | "questions" | "finished">("instructions");
+    const [step, setStep] = useState<"instructions" | "reading" | "summary" | "questions">("instructions");
     const [readingPhase, setReadingPhase] = useState<"word-by-word" | "decision">("word-by-word");
 
     // Group sentences by set_id: { [setId]: Sentence[] }
@@ -123,7 +123,7 @@ function PartAContent() {
 
     }, [pickNextSet]);
 
-    async function logAction(action: "continue" | "switch" | "start_set" | "word_reveal", wordIndex?: number) {
+    const logAction = useCallback(async (action: "continue" | "switch" | "start_set" | "word_reveal", wordIndex?: number) => {
         if (!participantId || !currentSetId) return;
         try {
             await fetch("/api/part-a/log", {
@@ -140,9 +140,9 @@ function PartAContent() {
         } catch (e) {
             console.error("Log error", e);
         }
-    }
+    }, [participantId, currentSetId, currentIndex]);
 
-    const handleContinue = async () => {
+    const handleContinue = useCallback(async () => {
         if (!currentSetId) return;
 
         await logAction("continue");
@@ -158,19 +158,19 @@ function PartAContent() {
             // Completed set
             startNextSet();
         }
-    };
+    }, [currentSetId, currentIndex, logAction, startNextSet]);
 
-    const handleSwitch = async () => {
+    const handleSwitch = useCallback(async () => {
         if (!currentSetId) return;
 
         await logAction("switch");
 
         // Abandon set -> Move to valid next set (set id + 1)
         startNextSet();
-    };
+    }, [currentSetId, logAction, startNextSet]);
 
     const handleQuestionsComplete = () => {
-        setStep("finished");
+        router.push(`/part-b?participant_id=${participantId}`);
     };
 
 
@@ -185,7 +185,7 @@ function PartAContent() {
     // Split content into words, removing empty strings
     const words = currentSentence ? currentSentence.content.split(" ").filter(w => w.length > 0) : [];
 
-    // Keyboard Listener for SPR
+    // Keyboard Listener for SPR (word-by-word phase)
     useEffect(() => {
         if (step !== "reading" || readingPhase !== "word-by-word") return;
 
@@ -208,7 +208,28 @@ function PartAContent() {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [step, readingPhase, currentWordIndex, words.length, currentSetId, currentIndex, logAction]);
+    }, [step, readingPhase, currentWordIndex, words.length, logAction]);
+
+    // Keyboard Listener for Decision Phase (F = switch, J = continue)
+    useEffect(() => {
+        if (step !== "reading" || readingPhase !== "decision") return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Press F to switch to other topic
+            if (e.key === "F" || e.key === "f") {
+                e.preventDefault();
+                handleSwitch();
+            }
+            // Press J to continue reading
+            if (e.key === "J" || e.key === "j") {
+                e.preventDefault();
+                handleContinue();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [step, readingPhase, handleSwitch, handleContinue]);
 
 
     if (loading) return <div>Loading experiment data...</div>;
@@ -230,7 +251,7 @@ function PartAContent() {
                         <p>Press the <strong className="text-[var(--foreground)] border border-[var(--border)] px-1 py-0.5 rounded bg-[var(--input-bg)] text-xs uppercase tracking-wider">Spacebar</strong> to reveal each word one by one.</p>
                         <p>After each sentence, you can choose to <strong>Continue reading</strong> more about the topic, or <strong>Switch topic</strong> to read about something else.</p>
                     </div>
-                    <button onClick={handleStart} className={primaryBtn}>Start Task</button>
+                    <button type="button" onClick={handleStart} className={primaryBtn}>Start Task</button>
                 </div>
             )}
 
@@ -248,7 +269,7 @@ function PartAContent() {
 
                                     return (
                                         <span
-                                            key={index}
+                                            key={`${currentSentence?.id}-${index}`}
                                             className={`transition-all duration-200 ${isVisible
                                                 ? "text-[var(--foreground)] font-medium bg-[var(--input-bg)] px-2 -mx-2 rounded"
                                                 : "text-[var(--border)]"
@@ -272,13 +293,18 @@ function PartAContent() {
                         )}
 
                         {readingPhase === "decision" && (
-                            <div className="max-w-3xl w-full flex justify-between items-center px-4 animate-in fade-in duration-300">
-                                <button onClick={handleSwitch} className={outlineBtn}>
-                                    Go To Other Topics
-                                </button>
-                                <button onClick={handleContinue} className={primaryBtn}>
-                                    Continue Reading
-                                </button>
+                            <div className="max-w-3xl w-full flex flex-col items-center gap-4 animate-in fade-in duration-300">
+                                <div className="w-full flex justify-between items-center px-4">
+                                    <button type="button" onClick={handleSwitch} className={outlineBtn}>
+                                        Go To Other Topics
+                                    </button>
+                                    <button type="button" onClick={handleContinue} className={primaryBtn}>
+                                        Continue Reading
+                                    </button>
+                                </div>
+                                <p className="text-center text-xs font-medium text-[var(--muted)] uppercase tracking-widest opacity-60">
+                                    Press <strong className="text-[var(--foreground)] border border-[var(--border)] px-1.5 py-0.5 rounded bg-[var(--input-bg)] text-xs uppercase tracking-wider">F</strong> to switch topic or <strong className="text-[var(--foreground)] border border-[var(--border)] px-1.5 py-0.5 rounded bg-[var(--input-bg)] text-xs uppercase tracking-wider">J</strong> to continue
+                                </p>
                             </div>
                         )}
                     </div>
@@ -295,15 +321,6 @@ function PartAContent() {
                         participantId={participantId}
                         onComplete={handleQuestionsComplete}
                     />
-                </div>
-            )}
-
-            {step === "finished" && (
-                <div className="text-center space-y-6">
-                    <h2 className="text-3xl font-semibold">Part A Complete</h2>
-                    <button onClick={() => router.push(`/part-b?participant_id=${participantId}`)} className={primaryBtn}>
-                        Go to Part B
-                    </button>
                 </div>
             )}
         </div>

@@ -219,7 +219,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     if (view === "reading" && currentSubtopic && segments[currentSegmentIndex]) {
         return (
-            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 min-h-[500px] flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex flex-col">
                         <div className="text-xs text-[var(--muted)] uppercase tracking-wide mb-1">
@@ -230,11 +230,11 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
                     <span className="text-xs text-[var(--muted)]">Segment {currentSegmentIndex + 1}/{segments.length}</span>
                 </div>
 
-                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] min-h-[200px]">
+                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] flex-grow font-sans">
                     {segments[currentSegmentIndex].content}
                 </div>
 
-                <div className="flex justify-between gap-6">
+                <div className="flex justify-between gap-6 mt-auto">
                     <button
                         onClick={() => triggerQuestion("switch")}
                         className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
