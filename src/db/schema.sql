@@ -60,16 +60,6 @@ CREATE TABLE IF NOT EXISTS part_a_sentences (
     content TEXT NOT NULL
 );
 
-DROP TABLE IF EXISTS part_a_summaries;
-CREATE TABLE IF NOT EXISTS part_a_summaries (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    participant_id BIGINT NOT NULL,
-    group_id INT COMMENT 'For summaries (per group)',
-    content TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
-);
-
 DROP TABLE IF EXISTS part_a_questions;
 CREATE TABLE IF NOT EXISTS part_a_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -538,7 +528,6 @@ CREATE TABLE `part_c_formal_responses` (
     `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 
 
 
