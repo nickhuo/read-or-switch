@@ -31,7 +31,7 @@ export async function GET(request: Request) {
             }
 
             // part3_condition is now 1-3
-            const assignedConId = participants[0].part3_condition;
+            const assignedConId = participants[0].part3_condition + 1; // Map 0-2 to 1-3
 
             // 2. Identify Read Articles
             // Reading history is stored in part_c_pass_qop (Formal) or part_c_prac_pass_qop (Practice)

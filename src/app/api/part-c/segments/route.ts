@@ -45,7 +45,7 @@ export async function GET(request: Request) {
         if (phase === 'formal') {
             // Note: conID is the column in schema, not sp2_con_id
             whereClause += " AND conID = ?";
-            queryParams.push(condition);
+            queryParams.push(condition + 1); // Map 0-2 (DB) to 1-3 (CSV content)
             querySql = `SELECT ${selectFields} FROM ${segmentsTable} WHERE ${whereClause} ORDER BY CAST(passOrder AS UNSIGNED) ASC`;
         }
 
