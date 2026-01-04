@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { ChangeEvent, MouseEvent } from "react";
 
 interface CognitiveTestsProps {
@@ -242,29 +242,31 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                                 <div className="flex items-center gap-2 shrink-0 z-10">
                                     <button
                                         type="button"
+                                        aria-label="Same (Y)"
                                         onClick={(event) => handleLetterResponse(event, absoluteId, "S", prob)}
                                         className={`
-                                            h-10 px-3 rounded-lg text-sm font-semibold transition-all duration-200 border
+                                            h-10 w-10 rounded-lg text-sm font-semibold transition-all duration-200 border flex items-center justify-center
                                             ${response === "S"
                                                 ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)] shadow-sm transform scale-105"
                                                 : "bg-transparent text-[var(--muted)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--muted)]"
                                             }
                                         `}
                                     >
-                                        Same
+                                        Y
                                     </button>
                                     <button
                                         type="button"
+                                        aria-label="Different (N)"
                                         onClick={(event) => handleLetterResponse(event, absoluteId, "D", prob)}
                                         className={`
-                                            h-10 px-3 rounded-lg text-sm font-semibold transition-all duration-200 border
+                                            h-10 w-10 rounded-lg text-sm font-semibold transition-all duration-200 border flex items-center justify-center
                                             ${response === "D"
                                                 ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)] shadow-sm transform scale-105"
                                                 : "bg-transparent text-[var(--muted)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--muted)]"
                                             }
                                         `}
                                     >
-                                        Diff
+                                        N
                                     </button>
                                 </div>
 
@@ -317,7 +319,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                         <div key={q.id} className="border border-[var(--border)] p-5 rounded-lg bg-[var(--surface)]">
                             <h3 className="font-medium text-lg mb-4 border-b border-[var(--border)] pb-2">{q.id}. <span className="font-bold">{q.word}</span></h3>
                             <div className="space-y-2">
-                                {q.options.map((opt, idx) => (
+                                {q.options.map((opt) => (
                                     <label key={opt} className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-[var(--input-bg)] border border-transparent hover:border-[var(--border)] transition-colors">
                                         <input
                                             type="radio"

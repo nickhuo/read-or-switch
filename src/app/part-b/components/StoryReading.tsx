@@ -1,217 +1,255 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { Story, Segment } from "../types";
+import { useEffect, useRef, useState } from "react";
+import type { Segment, Story } from "../types";
 
 interface StoryReadingProps {
-    participantId: string;
-    phase: "practice" | "formal";
-    durationSeconds: number;
-    onComplete: () => void;
+  participantId: string;
+  phase: "practice" | "formal";
+  durationSeconds: number;
+  onComplete: () => void;
 }
 
 export default function StoryReading({ participantId, phase, durationSeconds, onComplete }: StoryReadingProps) {
-    const [stories, setStories] = useState<Story[]>([]);
-    const [visitedStoryIds, setVisitedStoryIds] = useState<Set<number>>(new Set());
+  const [stories, setStories] = useState<Story[]>([]);
+  const [visitedStoryIds, setVisitedStoryIds] = useState<Set<number>>(new Set());
 
-    // View state
-    const [view, setView] = useState<"selection" | "reading">("selection");
-    const [currentStory, setCurrentStory] = useState<Story | null>(null);
-    const [segments, setSegments] = useState<Segment[]>([]);
-    const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+  const [view, setView] = useState<"selection" | "reading">("selection");
+  const [currentStory, setCurrentStory] = useState<Story | null>(null);
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
 
-    // Timer
-    const [timeLeft, setTimeLeft] = useState(durationSeconds);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [timeLeft, setTimeLeft] = useState(durationSeconds);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
-        // Fetch stories
-        fetch(`/api/part-b/stories?phase=${phase}`)
-            .then(res => res.json())
-            .then(data => setStories(data))
-            .catch(err => console.error(err));
-    }, [phase]);
+  useEffect(() => {
+    fetch(`/api/part-b/stories?phase=${phase}`)
+      .then(res => res.json())
+      .then(data => setStories(data))
+      .catch(err => console.error(err));
+  }, [phase]);
 
-    useEffect(() => {
-        // Timer runs only if not finished.
-        // Requirement implies fixed time block? "Practice Block (4 minutes)".
-        // Usually forced stop after 4 mins.
-        timerRef.current = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    clearInterval(timerRef.current!);
-                    onComplete(); // Force finish
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
-    }, [onComplete]);
-
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
-
-    const handleSelectStory = async (story: Story) => {
-        setCurrentStory(story);
-        try {
-            const res = await fetch(`/api/part-b/segments?storyId=${story.id}&phase=${phase}&participantId=${participantId}`);
-            const data = await res.json();
-            setSegments(data);
-            setCurrentSegmentIndex(0);
-            setView("reading");
-            // Log action START
-            logAction(story.id, data[0]?.id, "start_story");
-        } catch (error) {
-            console.error(error);
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          onComplete();
+          return 0;
         }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
     };
+  }, [onComplete]);
 
-    const handleContinue = () => {
-        if (currentSegmentIndex < segments.length - 1) {
-            const nextIndex = currentSegmentIndex + 1;
-            setCurrentSegmentIndex(nextIndex);
-            // Log action CONTINUE
-            logAction(currentStory!.id, segments[nextIndex].id, "continue");
-        } else {
-            // End of story
-            finishStory();
-        }
-    };
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
-    const handleSwitch = () => {
-        // Log action SWITCH
-        logAction(currentStory!.id, segments[currentSegmentIndex]?.id, "switch");
-        finishStory();
-    };
+  const logAction = async (storyId: number, segmentId: number, type: "continue" | "switch" | "start_story") => {
+    try {
+      console.log(`Action: ${type}, Story: ${storyId}, Segment: ${segmentId}`);
+    } catch (e) {
+      console.error("Failed to log action", e);
+    }
+  };
 
-    const finishStory = () => {
-        if (currentStory) {
-            setVisitedStoryIds(prev => new Set(prev).add(currentStory.id));
-        }
-
-        // Check if all stories visited (if we want to enforce visiting all before timer ends? 
-        // User req: "After finishing all texts within a story set... Comprehension Phase".
-        // But also fixed time.
-        // If they finish early, they might wait or we proceed?
-        // Usually fixed time tasks just wait. But if they read EVERYTHING, we can probably let them proceed.
-        // I will check if all visited.
-
-        // Logic: Return to selection.
-        setView("selection");
-        setCurrentStory(null);
+  const handleSelectStory = async (story: Story) => {
+    setCurrentStory(story);
+    setSegments([]);
+    setCurrentSegmentIndex(0);
+    
+    try {
+      const res = await fetch(`/api/part-b/segments?storyId=${story.id}&phase=${phase}&participantId=${participantId}`);
+      if (!res.ok) throw new Error("Failed to fetch segments");
+      const data = await res.json();
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setSegments(data);
+        setView("reading");
+        logAction(story.id, data[0]?.id, "start_story");
+      } else {
         setSegments([]);
-    };
-
-    const logAction = async (storyId: number, segmentId: number, type: "continue" | "switch" | "start_story") => {
-        void participantId;
-        void storyId;
-        void segmentId;
-        void type;
-        // We could log reading time here if we tracked it per segment
-        // For simple MVP: just fire and forget
-        // Ideally we track time spent on *previous* segment before action.
-    };
-
-    // Check if everything visited
-    useEffect(() => {
-        if (stories.length > 0 && stories.every(s => visitedStoryIds.has(s.id))) {
-            // All read. Should we auto-advance?
-            // "After finish all... Summary".
-            // Let's show a "Finish" button in selection screen.
-        }
-    }, [visitedStoryIds, stories]);
-
-
-    if (view === "selection") {
-        const allVisited = stories.length > 0 && stories.every(s => visitedStoryIds.has(s.id));
-        return (
-            <div className="max-w-6xl mx-auto mt-12 px-6">
-                <div className="flex justify-between items-center mb-10 pb-4 border-b border-[var(--border)]">
-                    <h2 className="text-2xl font-semibold capitalize text-[var(--foreground)]">{phase} Phase: Choose a Story</h2>
-                    <div className="text-lg font-mono font-medium text-[var(--foreground)] bg-[var(--surface)] px-3 py-1.5 rounded-md border border-[var(--border)]">
-                        {formatTime(timeLeft)}
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {stories.map(story => (
-                        <button
-                            key={story.id}
-                            onClick={() => handleSelectStory(story)}
-                            className={`p-6 rounded-xl border text-left transition-all duration-200 min-h-[120px] flex flex-col justify-between ${visitedStoryIds.has(story.id)
-                                ? "bg-[var(--input-bg)] border-transparent text-[var(--muted)]"
-                                : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)] hover:shadow-sm"
-                                }`}
-                        >
-                            <h3 className={`text-lg font-medium ${visitedStoryIds.has(story.id) ? "opacity-60" : ""}`}>
-                                {story.title}
-                            </h3>
-                            {visitedStoryIds.has(story.id) && (
-                                <span className="text-xs text-green-600 font-medium uppercase tracking-wide bg-green-50 px-2 py-1 rounded-full self-start">Read</span>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
-                {allVisited && (
-                    <div className="mt-12 text-center">
-                        <div className="mb-6 p-4 bg-[var(--surface)] text-[var(--muted)] rounded-lg inline-block border border-[var(--border)]">
-                            You have read all stories.
-                        </div>
-                        <br />
-                        <button
-                            onClick={onComplete}
-                            className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring shadow-sm"
-                        >
-                            Finish Reading Phase
-                        </button>
-                    </div>
-                )}
-            </div>
-        );
+        setView("reading");
+      }
+    } catch (error) {
+      console.error(error);
     }
+  };
 
-    if (view === "reading" && currentStory) {
-        return (
-            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 relative border border-[var(--border)] min-h-[500px] flex flex-col">
-                <div className="absolute top-6 right-8 font-mono font-medium text-[var(--muted)] text-sm bg-[var(--input-bg)] px-2 py-1 rounded">
-                    {formatTime(timeLeft)}
-                </div>
-
-                <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest mb-6 text-center">{currentStory.title}</h3>
-
-                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] flex-grow font-sans">
-                    {segments[currentSegmentIndex]?.content}
-                </div>
-
-                <div className="flex justify-between gap-6 mt-auto">
-                    <button
-                        onClick={handleSwitch}
-                        className="flex-1 px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
-                    >
-                        Switch Story
-                    </button>
-                    <button
-                        onClick={handleContinue}
-                        className="flex-1 bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium text-sm shadow-sm focus-ring"
-                    >
-                        Continue
-                    </button>
-                </div>
-
-                <div className="text-center mt-6 text-[var(--muted)] text-xs uppercase tracking-widest opacity-60">
-                    Segment {currentSegmentIndex + 1} / {segments.length}
-                </div>
-            </div>
-        );
+  const handleContinue = () => {
+    if (!currentStory) return;
+    if (currentSegmentIndex < segments.length - 1) {
+      const nextIndex = currentSegmentIndex + 1;
+      setCurrentSegmentIndex(nextIndex);
+      logAction(currentStory.id, segments[nextIndex].id, "continue");
+      
+      const scrollContainer = document.getElementById("story-scroll-container");
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+    } else {
+      finishStory();
     }
+  };
 
-    return <div>Loading...</div>;
+  const handleSwitch = () => {
+    if (!currentStory) return;
+    logAction(currentStory.id, segments[currentSegmentIndex]?.id, "switch");
+    finishStory();
+  };
+
+  const finishStory = () => {
+    if (currentStory) {
+      setVisitedStoryIds(prev => new Set(prev).add(currentStory.id));
+    }
+    setView("selection");
+    setCurrentStory(null);
+    setSegments([]);
+  };
+
+  if (view === "selection") {
+    const allVisited = stories.length > 0 && stories.every(s => visitedStoryIds.has(s.id));
+    return (
+      <div className="w-full h-full flex flex-col p-6">
+        <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col">
+          <div className="flex justify-between items-end mb-12 border-b border-[var(--border)] pb-6">
+            <div>
+              <h2 className="text-3xl font-serif font-medium text-[var(--foreground)] mb-2">Library</h2>
+              <p className="text-[var(--muted)]">Choose a story to begin reading.</p>
+            </div>
+            <div className="text-lg font-mono font-medium text-[var(--primary)] bg-[var(--surface)] px-4 py-2 rounded border border-[var(--border)] shadow-sm tabular-nums">
+              {formatTime(timeLeft)}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
+            {stories.map(story => {
+              const isRead = visitedStoryIds.has(story.id);
+              return (
+                <button
+                  type="button"
+                  key={story.id}
+                  onClick={() => handleSelectStory(story)}
+                  disabled={false}
+                  className={`relative p-8 rounded-xl border text-left transition-all duration-300 flex flex-col justify-between h-48 group overflow-hidden ${
+                    isRead
+                      ? "bg-[var(--input-bg)] border-transparent text-[var(--muted)]"
+                      : "bg-[var(--surface)] border-[var(--border)] hover:border-[var(--primary)] hover:shadow-lg hover:-translate-y-1"
+                  }`}
+                >
+                  <div className="relative z-10">
+                    <h3 className={`text-xl font-serif font-medium mb-2 ${!isRead && "group-hover:text-[var(--primary)]"} transition-colors`}>
+                      {story.title}
+                    </h3>
+                    <div className="w-8 h-1 bg-[var(--border)] group-hover:bg-[var(--primary)] transition-colors rounded-full" />
+                  </div>
+                  
+                  {isRead && (
+                    <span className="absolute bottom-6 right-6 text-xs font-bold uppercase tracking-widest text-[var(--muted)] border border-[var(--border)] px-3 py-1 rounded-full">
+                      Completed
+                    </span>
+                  )}
+                  
+                  {!isRead && (
+                    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-[var(--primary)]/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {allVisited && (
+            <div className="mt-auto pt-8 text-center">
+              <button
+                type="button"
+                onClick={onComplete}
+                className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-4 rounded-full font-medium hover:opacity-90 transition-all shadow-lg hover:shadow-xl active:scale-[0.98] text-sm uppercase tracking-widest"
+              >
+                Complete Phase
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const currentSegment = segments[currentSegmentIndex];
+  const progress = segments.length > 0 ? ((currentSegmentIndex + 1) / segments.length) * 100 : 0;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-[var(--surface)] flex flex-col h-screen w-screen">
+      <div className="shrink-0 h-16 flex items-center justify-between px-6 border-b border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-md z-20">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] border border-[var(--border)] px-2 py-0.5 rounded">
+            Reading
+          </span>
+          <h1 className="text-sm font-semibold text-[var(--foreground)] truncate max-w-md">
+            {currentStory?.title}
+          </h1>
+        </div>
+        <div className="font-mono text-sm font-medium text-[var(--foreground)] tabular-nums">
+          {formatTime(timeLeft)}
+        </div>
+      </div>
+
+      <div className="h-1 w-full bg-[var(--input-bg)] shrink-0">
+        <div 
+          className="h-full bg-[var(--primary)] transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div 
+        id="story-scroll-container"
+        className="flex-1 overflow-y-auto relative bg-[var(--background)] scroll-smooth"
+      >
+        <div className="min-h-full w-full max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20 flex flex-col items-center">
+          
+          {!currentSegment ? (
+            <div className="flex flex-col items-center justify-center h-64 text-[var(--muted)] animate-pulse">
+              <p>Loading story segment...</p>
+            </div>
+          ) : (
+            <div className="w-full">
+              <p className="text-xl md:text-2xl leading-loose font-serif text-[var(--foreground)] antialiased text-left border-l-4 border-[var(--border)] pl-6 py-2">
+                {currentSegment.content}
+              </p>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      <div className="shrink-0 p-6 bg-[var(--surface)] border-t border-[var(--border)] z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
+          <button
+            type="button"
+            onClick={handleSwitch}
+            className="px-6 py-3 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors text-sm font-medium uppercase tracking-wider focus-ring"
+          >
+            Switch Story
+          </button>
+          
+          <div className="text-[10px] text-[var(--muted)] uppercase tracking-widest hidden md:block">
+             {currentSegmentIndex + 1} <span className="mx-1 opacity-30">/</span> {segments.length}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleContinue}
+            disabled={!currentSegment}
+            className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all font-semibold text-sm shadow-md hover:shadow-lg focus-ring uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {currentSegmentIndex === segments.length - 1 ? "Finish Story" : "Next Segment"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

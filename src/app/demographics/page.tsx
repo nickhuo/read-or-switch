@@ -35,6 +35,14 @@ function DemographicsForm() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [hasStarted, setHasStarted] = useState(false);
+
+    const handleStart = () => {
+        document.documentElement.requestFullscreen().catch((e) => {
+            console.warn("Full screen request failed", e);
+        });
+        setHasStarted(true);
+    };
 
     const handleKnowledgeChange = (topic: string, value: string) => {
         setFormData((prev) => ({
@@ -106,6 +114,25 @@ function DemographicsForm() {
 
     if (!participantId) {
         return <div className="p-8 text-center text-red-500">Error: No Participant ID provided.</div>;
+    }
+
+    if (!hasStarted) {
+        return (
+            <div className="min-h-screen flex items-center justify-center p-6">
+                <div className="max-w-md w-full glass-panel p-10 rounded-2xl shadow-lg text-center">
+                    <h1 className="text-2xl font-bold mb-4 text-[var(--foreground)]">Welcome</h1>
+                    <p className="text-[var(--muted)] mb-8">
+                        Please click the button below to enter full-screen mode and begin the study.
+                    </p>
+                    <button
+                        onClick={handleStart}
+                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring shadow-sm w-full"
+                    >
+                        Enter Full Screen & Begin
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     // Shared input class (matching global design system)

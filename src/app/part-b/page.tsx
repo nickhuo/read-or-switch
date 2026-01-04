@@ -1,10 +1,10 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import ComprehensionQuestions from "./components/ComprehensionQuestions";
 import StoryReading from "./components/StoryReading";
 import SummaryInput from "./components/SummaryInput";
-import ComprehensionQuestions from "./components/ComprehensionQuestions";
 
 type Phase =
     | "instructions"
@@ -68,19 +68,23 @@ function PartBOrchestrator() {
     const primaryTitle = "text-3xl font-semibold tracking-tight text-[var(--foreground)] mb-6";
     const bodyText = "text-[var(--muted)] text-base leading-relaxed mb-8";
 
+    const isReadingMode = view === "practice_reading" || view === "formal_reading";
+
     return (
-        <div className="min-h-screen bg-[var(--background)] pb-20">
-            <header className="sticky top-0 z-10 glass-panel border-b border-[var(--border)] px-6 py-4 mb-8 backdrop-blur-md">
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <div className="text-sm font-mono text-[var(--muted)] bg-[var(--surface)] px-2 py-1 rounded border border-[var(--border)]">
-                        ID: <span className="text-[var(--foreground)]">{participantId}</span>
+        <div className={`min-h-screen bg-[var(--background)] ${isReadingMode ? "h-screen overflow-hidden" : "pb-20"}`}>
+            {!isReadingMode && (
+                <header className="sticky top-0 z-10 glass-panel border-b border-[var(--border)] px-6 py-4 mb-8 backdrop-blur-md">
+                    <div className="max-w-7xl mx-auto flex justify-between items-center">
+                        <div className="text-sm font-mono text-[var(--muted)] bg-[var(--surface)] px-2 py-1 rounded border border-[var(--border)]">
+                            ID: <span className="text-[var(--foreground)]">{participantId}</span>
+                        </div>
+                        <div className="text-sm font-medium text-[var(--foreground)] tracking-wide">
+                            {getViewLabel(view)}
+                        </div>
                     </div>
-                    <div className="text-sm font-medium text-[var(--foreground)] tracking-wide">
-                        {getViewLabel(view)}
-                    </div>
-                </div>
-            </header>
-            <main className="px-6">
+                </header>
+            )}
+            <main className={isReadingMode ? "h-full w-full" : "px-6"}>
                 {view === "instructions" && (
                     <div className={cardClass}>
                         <h2 className={primaryTitle}>Part 2: Story Reading Task</h2>
@@ -89,7 +93,7 @@ function PartBOrchestrator() {
                             <p className="mb-4">Some are for practice, followed by a main task.</p>
                             <p>After reading, you will answer some questions.</p>
                         </div>
-                        <button onClick={handleNext} className={buttonClass}>
+                        <button type="button" onClick={handleNext} className={buttonClass}>
                             Start Practice
                         </button>
                     </div>
@@ -127,7 +131,7 @@ function PartBOrchestrator() {
                             <p className="mb-4">You will now begin the formal reading task.</p>
                             <p>You have <strong className="text-[var(--foreground)]">15 minutes</strong>.</p>
                         </div>
-                        <button onClick={handleNext} className={buttonClass}>
+                        <button type="button" onClick={handleNext} className={buttonClass}>
                             Start Main Task
                         </button>
                     </div>

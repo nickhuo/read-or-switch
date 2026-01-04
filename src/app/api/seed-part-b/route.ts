@@ -36,9 +36,9 @@ export async function GET() {
             const practiceContent = fs.readFileSync(practicePath, 'utf8');
             const questionsContent = fs.existsSync(questionsPath) ? fs.readFileSync(questionsPath, 'utf8') : null;
 
-            const formalRecords = parse(formalContent, { columns: true, skip_empty_lines: true, trim: true });
-            const practiceRecords = parse(practiceContent, { columns: true, skip_empty_lines: true, trim: true });
-            const questionRecords = questionsContent ? parse(questionsContent, { columns: true, skip_empty_lines: true, trim: true }) : [];
+            const formalRecords = parse(formalContent, { columns: true, skip_empty_lines: true, trim: true }) as any[];
+            const practiceRecords = parse(practiceContent, { columns: true, skip_empty_lines: true, trim: true }) as any[];
+            const questionRecords = questionsContent ? parse(questionsContent, { columns: true, skip_empty_lines: true, trim: true }) as any[] : [];
 
             async function insertRecords(records: any[], phase: 'practice' | 'formal') {
                 const suffix = phase;

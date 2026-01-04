@@ -159,6 +159,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
                     After each segment, you will answer a few feedback questions.
                 </p>
                 <button
+                    type="button"
                     onClick={handleStart}
                     className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring"
                 >
@@ -172,81 +173,137 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
         const allVisited = subtopics.length > 0 && subtopics.every(sub => visitedStoryIds.has(sub.id));
 
         return (
-            <div className="max-w-5xl mx-auto mt-12 px-6">
-                <h2 className="text-2xl font-semibold mb-8 text-center text-[var(--foreground)]">Practice Subtopics</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {subtopics.map(sub => {
-                        const isVisited = visitedStoryIds.has(sub.id);
-                        return (
-                            <button
-                                key={sub.id}
-                                onClick={() => !isVisited && handleSelectSubtopic(sub)}
-                                disabled={isVisited}
-                                className={`p-8 rounded-xl border text-left transition-all duration-200 ${isVisited
-                                    ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
-                                    : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)] hover:shadow-sm"
-                                    }`}
-                            >
-                                <h3 className="text-lg font-medium">{sub.title}</h3>
-                                {isVisited && <div className="text-xs mt-3 font-medium text-[var(--muted)] uppercase tracking-wide">Visited</div>}
-                            </button>
-                        );
-                    })}
-                </div>
+            <div className="w-full h-full flex flex-col p-6">
+                <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col mt-8">
+                    <div className="flex justify-between items-end mb-12 border-b border-[var(--border)] pb-6">
+                        <div>
+                            <h2 className="text-3xl font-serif font-medium text-[var(--foreground)] mb-2">Practice Subtopics</h2>
+                            <p className="text-[var(--muted)]">Choose a subtopic to begin reading.</p>
+                        </div>
+                    </div>
 
-                {allVisited && (
-                    <div className="mt-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <button
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
+                        {subtopics.map(sub => {
+                            const isVisited = visitedStoryIds.has(sub.id);
+                            return (
+                                <button
+                                    type="button"
+                                    key={sub.id}
+                                    onClick={() => !isVisited && handleSelectSubtopic(sub)}
+                                    disabled={isVisited}
+                                    className={`relative p-8 rounded-xl border text-left transition-all duration-300 flex flex-col justify-between h-48 group overflow-hidden ${isVisited
+                                        ? "bg-[var(--input-bg)] border-transparent text-[var(--muted)]"
+                                        : "bg-[var(--surface)] border-[var(--border)] hover:border-[var(--primary)] hover:shadow-lg hover:-translate-y-1"
+                                        }`}
+                                >
+                                    <div className="relative z-10">
+                                        <h3 className={`text-xl font-serif font-medium mb-2 ${!isVisited && "group-hover:text-[var(--primary)]"} transition-colors`}>
+                                            {sub.title}
+                                        </h3>
+                                        <div className="w-8 h-1 bg-[var(--border)] group-hover:bg-[var(--primary)] transition-colors rounded-full" />
+                                    </div>
+
+                                    {isVisited && (
+                                        <span className="absolute bottom-6 right-6 text-xs font-bold uppercase tracking-widest text-[var(--muted)] border border-[var(--border)] px-3 py-1 rounded-full">
+                                            Completed
+                                        </span>
+                                    )}
+
+                                    {!isVisited && (
+                                        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-[var(--primary)]/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {allVisited && (
+                        <div className="mt-auto pt-8 text-center">
+                            <button
+                                type="button"
+                                onClick={onComplete}
+                                className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-4 rounded-full font-medium hover:opacity-90 transition-all shadow-lg hover:shadow-xl active:scale-[0.98] text-sm uppercase tracking-widest"
+                            >
+                                Continue to Next Part
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="mt-8 text-center">
+                         <button
+                            type="button"
                             onClick={onComplete}
-                            className="bg-[var(--primary)] text-[var(--primary-fg)] px-12 py-4 rounded-xl text-lg font-bold shadow-lg hover:opacity-90 transition-all transform hover:scale-105"
+                            className="text-[var(--muted)] underline hover:text-[var(--foreground)] text-sm"
                         >
-                            Continue to Next Part
+                            Skip Practice
                         </button>
                     </div>
-                )}
-
-                <div className="mt-12 text-center">
-                    <button
-                        onClick={onComplete}
-                        className="text-[var(--muted)] underline hover:text-[var(--foreground)]"
-                    >
-                        Skip Practice
-                    </button>
                 </div>
             </div>
         );
     }
 
-    if (view === "reading" && currentSubtopic && segments[currentSegmentIndex]) {
+    if (view === "reading" && currentSubtopic) {
+        const currentSegment = segments[currentSegmentIndex];
+        const progress = segments.length > 0 ? ((currentSegmentIndex + 1) / segments.length) * 100 : 0;
+
         return (
-            <div className="max-w-3xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 min-h-[500px] flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="flex flex-col">
-                        <div className="text-xs text-[var(--muted)] uppercase tracking-wide mb-1">
+            <div className="fixed inset-0 z-50 bg-[var(--surface)] flex flex-col h-screen w-screen">
+                <div className="shrink-0 h-16 flex items-center justify-between px-6 border-b border-[var(--border)] bg-[var(--surface)]/80 backdrop-blur-md z-20">
+                    <div className="flex items-center gap-4">
+                        <span className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] border border-[var(--border)] px-2 py-0.5 rounded">
+                            Practice
+                        </span>
+                        <h1 className="text-sm font-semibold text-[var(--foreground)] truncate max-w-md">
                             {currentSubtopic.title}
-                        </div>
-                        <h3 className="text-sm font-mono text-[var(--muted)] uppercase tracking-widest hidden">Reading</h3>
+                        </h1>
                     </div>
-                    <span className="text-xs text-[var(--muted)]">Segment {currentSegmentIndex + 1}/{segments.length}</span>
+                    <div className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">
+                        Segment {currentSegmentIndex + 1}/{segments.length}
+                    </div>
                 </div>
 
-                <div className="p-8 bg-[var(--surface)] border border-[var(--border)] rounded-lg mb-8 text-lg leading-loose text-[var(--foreground)] flex-grow font-sans">
-                    {segments[currentSegmentIndex].content}
+                <div className="h-1 w-full bg-[var(--input-bg)] shrink-0">
+                    <div 
+                        className="h-full bg-[var(--primary)] transition-all duration-500 ease-out"
+                        style={{ width: `${progress}%` }}
+                    />
                 </div>
 
-                <div className="flex justify-between gap-6 mt-auto">
-                    <button
-                        onClick={() => triggerQuestion("switch")}
-                        className="px-6 py-3 rounded-lg border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors font-medium text-sm"
-                    >
-                        Go to Other Subtopics
-                    </button>
-                    <button
-                        onClick={() => triggerQuestion("continue")}
-                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg hover:opacity-90 transition-all font-medium text-sm shadow-sm focus-ring"
-                    >
-                        {currentSegmentIndex < segments.length - 1 ? "Next Segment" : "Finish Subtopic"}
-                    </button>
+                <div className="flex-1 overflow-y-auto relative bg-[var(--background)] scroll-smooth">
+                    <div className="min-h-full w-full max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20 flex flex-col items-center">
+                        {!currentSegment ? (
+                            <div className="flex flex-col items-center justify-center h-64 text-[var(--muted)] animate-pulse">
+                                <p>Loading segment...</p>
+                            </div>
+                        ) : (
+                            <div className="w-full">
+                                <p className="text-xl md:text-2xl leading-loose font-serif text-[var(--foreground)] antialiased text-left border-l-4 border-[var(--border)] pl-6 py-2">
+                                    {currentSegment.content}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="shrink-0 p-6 bg-[var(--surface)] border-t border-[var(--border)] z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                    <div className="max-w-7xl mx-auto flex items-center justify-between gap-6">
+                        <button
+                            type="button"
+                            onClick={() => triggerQuestion("switch")}
+                            className="px-6 py-3 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors text-sm font-medium uppercase tracking-wider focus-ring"
+                        >
+                            Switch Subtopic
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => triggerQuestion("continue")}
+                            disabled={!currentSegment}
+                            className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all font-semibold text-sm shadow-md hover:shadow-lg focus-ring uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {currentSegmentIndex < segments.length - 1 ? "Next Segment" : "Finish Subtopic"}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -255,7 +312,6 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
     if (view === "question") {
         return (
             <SegmentFeedback
-                questions={[]}
                 onSubmit={handleFeedbackSubmit}
             />
         );

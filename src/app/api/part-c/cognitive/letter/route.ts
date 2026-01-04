@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { v4 as uuidv4 } from 'uuid'; // Do I have uuid? likely not. generate simple one.
 
 // Duplicated from CognitiveTests.tsx to ensure data consistency
 const LETTER_COMPARISON_ROUNDS: Record<number, Array<{ left: string; right: string; answer: "S" | "D" }>> = {
