@@ -191,6 +191,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                     </ul>
                 </div>
                 <button
+                    type="button"
                     onClick={handleIntroNext}
                     className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring"
                 >
@@ -203,63 +204,103 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
     if (subPhase === "letter") {
         const currentProblems = LETTER_COMPARISON_ROUNDS[currentRound] || [];
         // Calculate offset for absolute ID: (round - 1) * 10
-        // Assumes 10 items per round as per spec
         const idOffset = (currentRound - 1) * 10;
 
         return (
-            <div className="max-w-5xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 border border-[var(--border)]">
-                <div className="text-center mb-10">
-                    <h2 className="text-2xl font-semibold text-[var(--foreground)] mb-2">Letter Comparison Round {currentRound}</h2>
-                    <p className="text-[var(--muted)] font-medium">Please compare the strings as fast as you can.</p>
+            <div className="max-w-6xl mx-auto mt-16 px-4 pb-20">
+                <div className="text-center mb-12 space-y-3">
+                    <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                        Letter Comparison <span className="font-normal text-[var(--muted)] mx-2">/</span> Round {currentRound}
+                    </h2>
+                    <p className="text-[var(--muted)] text-base max-w-md mx-auto">
+                        Quickly determine if the two character strings are identical or different.
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {currentProblems.map((prob, idx) => {
                         const absoluteId = idOffset + idx + 1;
+                        const response = letterResponses[absoluteId];
+                        
                         return (
-                            <div key={absoluteId} className="grid grid-cols-[1fr_120px_1fr] items-center border border-[var(--border)] rounded-lg p-5 bg-[var(--surface)] hover:border-[var(--muted)] transition-colors">
-                                <div className="flex items-center justify-between pr-4 w-full">
-                                    <span className="font-mono text-[var(--muted)] text-sm w-6">{absoluteId}.</span>
-                                    <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)] text-right">{prob.left}</span>
+                            <div 
+                                key={absoluteId} 
+                                className={`
+                                    group relative flex items-center justify-between p-4 rounded-xl border transition-all duration-200
+                                    ${response 
+                                        ? "bg-[var(--surface)] border-[var(--foreground)] ring-1 ring-[var(--foreground)] shadow-sm" 
+                                        : "bg-[var(--surface)] border-[var(--border)] hover:border-[var(--muted)] hover:shadow-sm"
+                                    }
+                                `}
+                            >
+                                <div className="flex-1 text-right pr-3">
+                                    <span className="font-mono text-xl font-medium tracking-[0.2em] text-[var(--foreground)] select-none tabular-nums break-all">
+                                        {prob.left}
+                                    </span>
                                 </div>
 
-                                <div className="flex justify-center gap-3">
+                                <div className="flex items-center gap-2 shrink-0 z-10">
                                     <button
+                                        type="button"
                                         onClick={(event) => handleLetterResponse(event, absoluteId, "S", prob)}
-                                        className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[absoluteId] === "S"
-                                            ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
-                                            : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
-                                            }`}
-                                    >S</button>
+                                        className={`
+                                            h-10 px-3 rounded-lg text-sm font-semibold transition-all duration-200 border
+                                            ${response === "S"
+                                                ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)] shadow-sm transform scale-105"
+                                                : "bg-transparent text-[var(--muted)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--muted)]"
+                                            }
+                                        `}
+                                    >
+                                        Same
+                                    </button>
                                     <button
+                                        type="button"
                                         onClick={(event) => handleLetterResponse(event, absoluteId, "D", prob)}
-                                        className={`w-10 h-10 rounded-md border font-bold transition-all ${letterResponses[absoluteId] === "D"
-                                            ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]"
-                                            : "bg-[var(--surface)] text-[var(--muted)] border-[var(--border)] hover:border-[var(--foreground)]"
-                                            }`}
-                                    >D</button>
+                                        className={`
+                                            h-10 px-3 rounded-lg text-sm font-semibold transition-all duration-200 border
+                                            ${response === "D"
+                                                ? "bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)] shadow-sm transform scale-105"
+                                                : "bg-transparent text-[var(--muted)] border-[var(--border)] hover:text-[var(--foreground)] hover:border-[var(--muted)]"
+                                            }
+                                        `}
+                                    >
+                                        Diff
+                                    </button>
                                 </div>
 
-                                <div className="text-left pl-4 w-full">
-                                    <span className="font-mono text-lg font-medium tracking-widest text-[var(--foreground)]">{prob.right}</span>
+                                <div className="flex-1 text-left pl-3">
+                                    <span className="font-mono text-xl font-medium tracking-[0.2em] text-[var(--foreground)] select-none tabular-nums break-all">
+                                        {prob.right}
+                                    </span>
+                                </div>
+                                
+                                <div className="absolute left-2 top-1/2 -translate-y-1/2">
+                                    <span className="text-[10px] font-mono text-[var(--border)] group-hover:text-[var(--muted)] transition-colors">
+                                        {String(absoluteId).padStart(2, '0')}
+                                    </span>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="text-center mt-12">
-                    <button
-                        onClick={handleLetterSubmit}
-                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring flex items-center justify-center gap-2 mx-auto"
-                    >
-                        {currentRound < Object.keys(LETTER_COMPARISON_ROUNDS).length ? (
-                            <>Next Round <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></>
-                        ) : (
-                            <>Done <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg></>
-                        )}
-                    </button>
+                <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--background)] to-transparent pointer-events-none">
+                    <div className="max-w-4xl mx-auto pointer-events-auto flex justify-center">
+                        <button
+                            type="button"
+                            onClick={handleLetterSubmit}
+                            className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-full font-medium hover:opacity-90 transition-all shadow-lg hover:shadow-xl focus-ring flex items-center gap-2 transform active:scale-95"
+                        >
+                            {currentRound < Object.keys(LETTER_COMPARISON_ROUNDS).length ? (
+                                <>Next Round <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></>
+                            ) : (
+                                <>Complete Section <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg></>
+                            )}
+                        </button>
+                    </div>
                 </div>
+                
+                <div className="h-24" />
             </div>
         );
     }
@@ -277,7 +318,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                             <h3 className="font-medium text-lg mb-4 border-b border-[var(--border)] pb-2">{q.id}. <span className="font-bold">{q.word}</span></h3>
                             <div className="space-y-2">
                                 {q.options.map((opt, idx) => (
-                                    <label key={idx} className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-[var(--input-bg)] border border-transparent hover:border-[var(--border)] transition-colors">
+                                    <label key={opt} className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-[var(--input-bg)] border border-transparent hover:border-[var(--border)] transition-colors">
                                         <input
                                             type="radio"
                                             name={`vocab-${q.id}`}
@@ -295,7 +336,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                 </div>
 
                 <div className="text-center mt-12">
-                    <button onClick={handleVocabSubmit} className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring shadow-sm">
+                    <button type="button" onClick={handleVocabSubmit} className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring shadow-sm">
                         Finish Vocabulary Test
                     </button>
                 </div>
