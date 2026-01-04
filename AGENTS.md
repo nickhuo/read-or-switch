@@ -2,7 +2,7 @@
 
 Repository: read-or-switch — Next.js 16 (App Router, React Compiler) / React 19 / TypeScript 5 / Tailwind 4 / MySQL
 Purpose: Narrative Text Foraging study app (Parts A/B/C + cognitive tasks).
-Audience: coding agents; follow before changing code. Target length ~150 lines; keep updated.
+Audience: coding agents; follow before modifying code. Target length ~150 lines; keep updated.
 
 ## 1) Commands
 - Dev: `npm run dev`
@@ -25,7 +25,7 @@ Audience: coding agents; follow before changing code. Target length ~150 lines; 
 ## 3) Linting & formatting
 - ESLint flat config: `eslint.config.mjs` using `eslint-config-next` core-web-vitals + TypeScript.
 - Ignores: `.next/**`, `out/**`, `build/**`, `next-env.d.ts` via `globalIgnores` override.
-- No Prettier/Stylelint. Follow repo style: 2 spaces, semicolons, double quotes in TS/TSX.
+- No Prettier/Stylelint. Follow local file style: 4-space indentation, semicolons; prefer double quotes in TS/TSX but keep consistency within the file.
 - Run `npm run lint` before handoff; fix violations rather than disabling rules.
 
 ## 4) Stack & runtime
@@ -38,15 +38,19 @@ Audience: coding agents; follow before changing code. Target length ~150 lines; 
 ## 5) Data layer & environment
 - MySQL via `mysql2/promise`; shared pool in `src/lib/db.ts` (connectionLimit 10).
 - Use `query(sql, params)` helper; always parameterize inputs. Never interpolate user data into SQL strings.
+- For typed results, use `RowDataPacket` (mysql2) and narrow to typed arrays/records.
+- Use `pool.getConnection()` for transactions and release in `finally`.
 - `.env.local` required for DB creds; never commit secrets. Migration script reads it manually.
 - Migrations/seeds consume CSVs under `docs/Study Material/*`; scripts are TypeScript run with tsx.
 - When schema changes, update `src/db/migrate.ts` and CSV-driven seeders together; keep FK toggles consistent.
 
 ## 6) API routes (Next.js route handlers)
 - Location: `src/app/api/**/route.ts`; export `GET`/`POST` handlers only.
+- For routes using `request.url`/`searchParams`, add `export const dynamic = "force-dynamic"` (used in stories/subtopics routes).
 - Respond with `NextResponse.json(payload, { status })` everywhere.
 - Validate required params early; return 400 on missing/invalid, 404 on not found.
 - Wrap DB calls in try/catch; log with `console.error("Failed to <action>:", error)` plus context.
+- If selecting table names dynamically, only choose from a small whitelist derived from validated inputs.
 - Keep handlers small; move reusable logic to `src/lib`.
 - Never suppress types (`as any`, `@ts-ignore`, `@ts-expect-error`). Narrow shapes and use typed arrays/records instead.
 
