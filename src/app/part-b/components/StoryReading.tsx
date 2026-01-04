@@ -209,7 +209,7 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
         id="story-scroll-container"
         className="flex-1 overflow-y-auto relative bg-[var(--background)] scroll-smooth"
       >
-        <div className="min-h-full w-full max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20 flex flex-col items-center">
+        <div className="min-h-full w-full max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col items-center">
           
           {!currentSegment ? (
             <div className="flex flex-col items-center justify-center h-64 text-[var(--muted)] animate-pulse">
@@ -231,7 +231,7 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
           <button
             type="button"
             onClick={handleSwitch}
-            className="px-6 py-3 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors text-sm font-medium uppercase tracking-wider focus-ring"
+            className="border-2 border-[var(--primary)] text-[var(--primary)] px-8 py-3 rounded-lg hover:bg-[var(--primary)] hover:text-[var(--primary-fg)] active:scale-[0.98] transition-all font-semibold text-sm shadow-sm hover:shadow-md focus-ring uppercase tracking-widest"
           >
             Switch Story
           </button>

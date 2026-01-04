@@ -271,7 +271,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
                 </div>
 
                 <div className="flex-1 overflow-y-auto relative bg-[var(--background)] scroll-smooth">
-                    <div className="min-h-full w-full max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20 flex flex-col items-center">
+                    <div className="min-h-full w-full max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col items-center">
                         {!currentSegment ? (
                             <div className="flex flex-col items-center justify-center h-64 text-[var(--muted)] animate-pulse">
                                 <p>Loading segment...</p>
