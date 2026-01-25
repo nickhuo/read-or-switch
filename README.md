@@ -69,3 +69,16 @@ Then visit the following API endpoints in your browser or use `curl` to seed the
 - **Part C:** [http://localhost:3000/api/seed-part-c-new](http://localhost:3000/api/seed-part-c-new)
 
 These endpoints will reset the respective tables and populate them with initial study data.
+
+## Experiment Flow
+
+The study consists of the following stages:
+
+1. **Informed Consent** — Participant agrees to the study terms
+2. **Demographics** — Collection of basic user data
+3. **Part A: Sentence Reading Study** — Read sentences one word at a time, then answer comprehension questions
+4. **Part B: Story Reading Study** — Main foraging task where participants choose to continue or switch stories based on segment endings
+5. **Part C: Multi-text Learning Study** — Multi-text learning with cognitive tests (vocabulary & letter comparison)
+6. **Debriefing & Thank You** — Study completion
+
+The core research question examines how **predictable vs. unpredictable sentence endings** influence readers' decisions to **continue** reading the current story or **switch** to a different one.

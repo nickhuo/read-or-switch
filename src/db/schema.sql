@@ -102,7 +102,6 @@ CREATE TABLE IF NOT EXISTS part_a_logs (
     sentence_index INT NOT NULL,
     word_index INT,
     action_type VARCHAR(50) DEFAULT 'word_reveal',
-    reading_time_ms INT,
     timestamp DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
     FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
 );

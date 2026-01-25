@@ -233,7 +233,7 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
             onClick={handleSwitch}
             className="border-2 border-[var(--primary)] text-[var(--primary)] px-8 py-3 rounded-lg hover:bg-[var(--primary)] hover:text-[var(--primary-fg)] active:scale-[0.98] transition-all font-semibold text-sm shadow-sm hover:shadow-md focus-ring uppercase tracking-widest"
           >
-            Switch Story
+            Go to Other Stories
           </button>
           
           <div className="text-[10px] text-[var(--muted)] uppercase tracking-widest hidden md:block">
@@ -246,7 +246,7 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
             disabled={!currentSegment}
             className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all font-semibold text-sm shadow-md hover:shadow-lg focus-ring uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {currentSegmentIndex === segments.length - 1 ? "Finish Story" : "Next Segment"}
+            Continue Reading this Story
           </button>
         </div>
       </div>
