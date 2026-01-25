@@ -40,6 +40,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        if (!/^\d+$/.test(String(participantId))) {
+            console.error(`Invalid participant ID: ${participantId}`);
+            return NextResponse.json({ error: "Invalid participant ID format" }, { status: 400 });
+        }
+
         const sid = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
         for (const r of responses) {

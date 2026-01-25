@@ -45,6 +45,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        if (!/^\d+$/.test(String(participantId))) {
+            console.error(`Invalid participant ID: ${participantId}`);
+            return NextResponse.json({ error: "Invalid participant ID format" }, { status: 400 });
+        }
+
         for (const r of responses) {
             // Extract number from "1 - speak..."
             // Frontend sends "1 - speak...", we want just the number part as INT

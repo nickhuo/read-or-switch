@@ -129,18 +129,22 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
         } else {
             // Submit all data and move to Vocab
             try {
-                await fetch("/api/part-c/cognitive/letter", {
+                const res = await fetch("/api/part-c/cognitive/letter", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ participantId, responses: letterData })
                 });
+
+                if (!res.ok) {
+                    throw new Error(`Server responded with ${res.status}`);
+                }
 
                 setSubPhase("vocab");
                 setStartTime(eventTimestamp);
                 fetchVocabQuestions();
             } catch (e) {
                 console.error(e);
-                alert("Failed to save letter data");
+                alert("Failed to save letter data. Please try again.");
             }
         }
     };
@@ -167,15 +171,20 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     const handleVocabSubmit = async () => {
         try {
-            await fetch("/api/part-c/cognitive/vocab", {
+            const res = await fetch("/api/part-c/cognitive/vocab", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ participantId, responses: vocabData })
             });
+
+            if (!res.ok) {
+                throw new Error(`Server responded with ${res.status}`);
+            }
+
             onComplete();
         } catch (e) {
             console.error(e);
-            alert("Failed to save vocab data");
+            alert("Failed to save vocab data. Please try again.");
         }
     };
 

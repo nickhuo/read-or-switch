@@ -21,7 +21,7 @@ export default function PartCPage() {
 
 function PartCOrchestrator() {
     const searchParams = useSearchParams();
-    const participantId = searchParams.get("participant_id") || "test-user";
+    const participantId = searchParams.get("participant_id") || "1001";
 
     const [phase, setPhase] = useState<PartCPhase>("practice");
 
