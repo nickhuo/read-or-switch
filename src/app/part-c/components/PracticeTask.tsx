@@ -149,22 +149,77 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     if (view === "instructions") {
         return (
-            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 text-center">
-                <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)]">Part 3: Practice Task</h2>
-                <p className="mb-8 text-[var(--muted)] text-base leading-relaxed">
-                    You practice reading articles.
-                    <br />
-                    Select a subtopic to read.
-                    <br />
-                    After each segment, you will answer a few feedback questions.
-                </p>
-                <button
-                    type="button"
-                    onClick={handleStart}
-                    className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring"
-                >
-                    Start Practice
-                </button>
+            <div className="max-w-4xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+                <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)] text-center">Practice Task Instruction</h2>
+                
+                <div className="text-[var(--muted)] text-lg space-y-6 leading-relaxed text-left">
+                    <p>
+                        First, you will learn how to do the task through a short practice. Your task is to learn about animals. There are articles about three animal-related topics. The goal is to learn as much as you can about animals instead of memorizing the articles word for word. You will have <strong>4 minutes</strong> to read and learn before answering some questions. It is very important for you to pay attention to the articles and do your best to learn from them. Some animal topics are more difficult than others, so please try to manage your time effectively to optimize your learning within the time limit.
+                    </p>
+                    <p>
+                        During the <strong>4 minutes</strong>, you will select <em>one animal topic at a time</em> and read a collection of articles about it. You will see one article at a time and can read at your own pace.
+                    </p>
+                    <p>
+                        After reading each article, you will have a choice:
+                    </p>
+                    <ul className="list-disc pl-6 space-y-2">
+                        <li>To continue reading about the same animal topic, click <strong>“Read the Next Article.”</strong></li>
+                        <li>To switch to a new topic, click <strong>“Go to Other Topics.”</strong></li>
+                    </ul>
+                    <p>
+                        You will have <strong>4 minutes</strong> total to learn about animals, so <strong>do your best to concentrate and stay with a topic only as long as you feel you are still learning something</strong>. If the articles for the topic seem too difficult or not helping you learn, you might want to choose to switch to another topic. The choice is yours.
+                    </p>
+                    <p>
+                        Note that there are more articles than you can read fully within 4 minutes, so choose carefully when to continue or switch topics so that you can learn as much information as possible about animals.
+                    </p>
+                    <p>
+                        After reading each article, you will be asked to rate how easy the article was, how much new information you thought was in the article, how much you learned from the article, AND how much you learned from all the articles you read so far today. You will be asked to make these ratings on a scale from 0 to 100 by moving the circle:
+                    </p>
+                    
+                    <div className="bg-[var(--surface)] p-6 rounded-lg border border-[var(--border)] space-y-6">
+                        <div>
+                            <p className="font-medium text-[var(--foreground)] mb-2">1. Compared to the other articles that you have read today, how much new information was in this article?</p>
+                            <ul className="list-disc pl-6 text-sm">
+                                <li>0: No New Information</li>
+                                <li>100: Completely New Information</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p className="font-medium text-[var(--foreground)] mb-2">3. How much did you learn from this article?</p>
+                            <ul className="list-disc pl-6 text-sm">
+                                <li>0: Didn't Learn Anything at All</li>
+                                <li>100: Learned a Lot</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p className="font-medium text-[var(--foreground)] mb-2">4. How much did you learn overall from the articles you have read so far today (including this article)?</p>
+                            <ul className="list-disc pl-6 text-sm">
+                                <li>0: Didn't Learn Anything at All</li>
+                                <li>100: Learned a Lot</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <p>
+                        Again, after reading each article, you can choose to continue reading about the same animal topic by moving to the next article, or return to the main page to select another animal topic. Once you leave a topic, you will not be able to return to it.
+                    </p>
+                    <p>
+                        At the end of the task, you will be asked to report what you have learned. Please try your best to learn as much information as you can about <em>animals</em> within 4 minutes.
+                    </p>
+                    <p>
+                        When you are ready, please click the <strong>“Start”</strong> button to go to the next page.
+                    </p>
+                </div>
+
+                <div className="mt-10 text-center">
+                    <button
+                        type="button"
+                        onClick={handleStart}
+                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-4 rounded-lg text-lg font-medium hover:opacity-90 transition-all focus-ring shadow-md"
+                    >
+                        Start
+                    </button>
+                </div>
             </div>
         );
     }
@@ -291,9 +346,9 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
                         <button
                             type="button"
                             onClick={() => triggerQuestion("switch")}
-                            className="px-6 py-3 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors text-sm font-medium uppercase tracking-wider focus-ring"
+                            className="border-2 border-[var(--primary)] text-[var(--primary)] px-8 py-3 rounded-lg hover:bg-[var(--primary)] hover:text-[var(--primary-fg)] active:scale-[0.98] transition-all font-semibold text-sm shadow-sm hover:shadow-md focus-ring uppercase tracking-widest"
                         >
-                            Switch Subtopic
+                            Go to Other Topics
                         </button>
                         <button
                             type="button"
@@ -301,7 +356,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
                             disabled={!currentSegment}
                             className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all font-semibold text-sm shadow-md hover:shadow-lg focus-ring uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {currentSegmentIndex < segments.length - 1 ? "Next Segment" : "Finish Subtopic"}
+                            Read the Next Article
                         </button>
                     </div>
                 </div>

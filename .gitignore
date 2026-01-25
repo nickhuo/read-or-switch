@@ -13,8 +13,7 @@
 # testing
 /coverage
 .zed
-# next.js
-/.next/
+ next.js
 /out/
 
 # production

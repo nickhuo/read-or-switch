@@ -99,9 +99,12 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
                 if (typeof correctVal === 'number' || (typeof correctVal === 'string' && !isNaN(parseInt(correctVal)))) {
                     isCorrect = index === parseInt(String(correctVal));
                 } else {
-                    // map A->1, B->2...
-                    const map: Record<string, number> = { A: 1, B: 2, C: 3, D: 4 };
-                    isCorrect = index === map[correctVal as string];
+                    const map: Record<string, number> = { 
+                        A: 1, B: 2, C: 3, D: 4,
+                        a: 1, b: 2, c: 3, d: 4 
+                    };
+                    const key = String(correctVal).trim();
+                    isCorrect = index === map[key];
                 }
             }
 
@@ -141,7 +144,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
             <div className="max-w-xl mx-auto glass-panel p-12 rounded-xl shadow-sm mt-12 text-center">
                 <h2 className="text-2xl font-semibold mb-4 text-[var(--foreground)]">No Questions Found</h2>
                 <p className="text-[var(--muted)] mb-8">It seems you haven't read any articles that have associated comprehension questions.</p>
-                <button onClick={onComplete} className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg">Continue</button>
+                <button type="button" onClick={onComplete} className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg">Continue</button>
             </div>
         );
     }
@@ -163,7 +166,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
         <div className="max-w-5xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
             <h2 className="text-3xl font-semibold mb-4 text-[var(--foreground)]">Comprehension Questions</h2>
             <p className="mb-8 text-[var(--muted)] text-lg">
-                This is the final task! The multiple-choice questions here are based on the passages you read in the formal task.
+                This is the final task! The multiple-choice questions here are based on the passages you read in the formal task. Please do your best to answer each question carefully. If you are not sure, please select "I don't know the answer".
             </p>
 
             <div className="grid grid-cols-1 gap-8">
@@ -185,7 +188,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
 
                             <div className="space-y-3">
                                 {options.map((opt, i) => (
-                                    <label key={i} className={`block border p-3 rounded-lg cursor-pointer transition-colors ${responses[qId] === opt ? "bg-[var(--input-bg)] border-[var(--primary)]/50 ring-1 ring-[var(--primary)]/20" : "hover:bg-[var(--input-bg)] border-[var(--border)]"}`}>
+                                    <label key={opt} className={`block border p-3 rounded-lg cursor-pointer transition-colors ${responses[qId] === opt ? "bg-[var(--input-bg)] border-[var(--primary)]/50 ring-1 ring-[var(--primary)]/20" : "hover:bg-[var(--input-bg)] border-[var(--border)]"}`}>
                                         <div className="flex items-center gap-3">
                                             <input
                                                 type="radio"
@@ -207,6 +210,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
 
             <div className="text-center mt-12 mb-8">
                 <button
+                    type="button"
                     onClick={handleSubmit}
                     className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-3 rounded-lg text-lg font-medium hover:opacity-90 transition-all shadow-sm focus-ring"
                 >

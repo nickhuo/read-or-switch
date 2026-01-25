@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Story, Segment, Question } from "../../part-b/types";
 import SegmentFeedback from "./SegmentFeedback";
+import SummaryInput from "./SummaryInput";
 
 interface FormalTaskProps {
     participantId: string;
@@ -16,7 +17,7 @@ interface Subtopic {
     topic_id: string;
 }
 
-type ViewState = "instructions" | "subtopic-selection" | "reading" | "question";
+type ViewState = "instructions" | "subtopic-selection" | "reading" | "question" | "summary";
 
 export default function FormalTask({ participantId, onComplete }: FormalTaskProps) {
     // const [stories, setStories] = useState<Story[]>([]); // Removed
@@ -181,19 +182,87 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
 
     if (view === "instructions") {
         return (
-            <div className="max-w-xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12 text-center">
-                <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)]">Part 2: Formal Task</h2>
-                <div className="mb-8 text-[var(--muted)] text-base leading-relaxed">
-                    <p className="mb-2">You have <strong className="text-[var(--foreground)]">15 minutes</strong> to read.</p>
-                    <p>You can choose any subtopic to read.</p>
+            <div className="max-w-4xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
+                <h2 className="text-3xl font-semibold mb-6 tracking-tight text-[var(--foreground)] text-center">Formal Task Instruction</h2>
+                
+                <div className="text-[var(--muted)] text-lg space-y-6 leading-relaxed text-left">
+                    <p>
+                        Now, it's time for the formal task! You will receive a bonus based on your overall learning performance in the formal task.
+                    </p>
+                    <p>
+                        Your task is to learn about health. There are articles about five health-related topics. The goal is to learn as much as you can about health instead of memorizing the articles word for word. You will have 15 minutes to read and learn about these topics before answering some questions. It is very important for you to pay attention to the articles and do your best to learn from them. Some health topics are more difficult than others, so please try to manage your time effectively to optimize your learning within the time limit.
+                    </p>
+                    <p>
+                        During the 15 minutes, you will select one health topic at a time and read a collection of articles about it. You will see one article at a time and can read at your own pace.
+                    </p>
+                    <p>
+                        After reading each article, you will have a choice:
+                    </p>
+                    <ul className="list-disc pl-6 space-y-2">
+                        <li>To continue reading about the same health topic, click <strong>"Read the Next Article."</strong></li>
+                        <li>To switch to a new topic, click <strong>"Go to Other Topics."</strong></li>
+                    </ul>
+                    <p>
+                        You only have <strong>15 minutes</strong> to learn about health, so <strong>do your best to concentrate and stay with a topic only as long as you feel you are still learning something.</strong> If the articles for the topic seem too difficult or not helping you learn, you might want to choose to switch to another topic. The choice is yours.
+                    </p>
+                    <p>
+                        Note that there are more articles than you can read fully within 15 minutes, so choose carefully when you continue or switch topics so that you can learn as much information as possible about health.
+                    </p>
+                    <p>
+                        After reading each article, you will be asked to rate how easy the article was, how much new information you thought was in the article, how much you learned from the article, AND how much you learned from all the articles you read so far today. You will be asked to make these ratings on a scale from 0 to 100 by moving the circle:
+                    </p>
+                    
+                    <div className="bg-[var(--surface)] p-6 rounded-lg border border-[var(--border)] space-y-6">
+                        <div>
+                            <p className="font-medium text-[var(--foreground)] mb-2">1. Compared to the other articles that you have read today, how much new information was in this article?</p>
+                            <ul className="list-disc pl-6 text-sm">
+                                <li>0: No New Information</li>
+                                <li>100: Completely New Information</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p className="font-medium text-[var(--foreground)] mb-2">2. How easy was this article to read?</p>
+                            <ul className="list-disc pl-6 text-sm">
+                                <li>0: Very Difficult</li>
+                                <li>100: Very Easy</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p className="font-medium text-[var(--foreground)] mb-2">3. How much did you learn from this article?</p>
+                            <ul className="list-disc pl-6 text-sm">
+                                <li>0: Didn't Learn Anything at All</li>
+                                <li>100: Learned a Lot</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p className="font-medium text-[var(--foreground)] mb-2">4. How much did you learn overall from the articles you have read so far today (including this article)?</p>
+                            <ul className="list-disc pl-6 text-sm">
+                                <li>0: Didn't Learn Anything at All</li>
+                                <li>100: Learned a Lot</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <p>
+                        Again, after reading each article, you can decide to keep reading about this health topic by moving to the next article, or go back to the main page to choose another health topic. Once you decide to leave a topic, you will not be able to return.
+                    </p>
+                    <p>
+                        You will be asked what you have learned at the end of the task. Please try your best to learn as much information about health in 15 minutes.
+                    </p>
+                    <p>
+                        When you are ready, please go to the next page by pressing the <strong>"Start"</strong> button.
+                    </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={handleStart}
-                    className="bg-[var(--primary)] text-[var(--primary-fg)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-all focus-ring"
-                >
-                    Start Formal Task
-                </button>
+
+                <div className="mt-10 text-center">
+                    <button
+                        type="button"
+                        onClick={handleStart}
+                        className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-4 rounded-lg text-lg font-medium hover:opacity-90 transition-all focus-ring shadow-md"
+                    >
+                        Start
+                    </button>
+                </div>
             </div>
         );
     }
@@ -255,15 +324,24 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                         <div className="mt-auto pt-8 text-center">
                             <button
                                 type="button"
-                                onClick={onComplete}
+                                onClick={() => setView("summary")}
                                 className="bg-[var(--primary)] text-[var(--primary-fg)] px-10 py-4 rounded-full font-medium hover:opacity-90 transition-all shadow-lg hover:shadow-xl active:scale-[0.98] text-sm uppercase tracking-widest"
                             >
-                                Continue to Next Part
+                                Continue to Summary
                             </button>
                         </div>
                     )}
                 </div>
             </div>
+        );
+    }
+
+    if (view === "summary") {
+        return (
+            <SummaryInput
+                participantId={participantId}
+                onComplete={onComplete}
+            />
         );
     }
 
@@ -315,9 +393,9 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                          <button
                             type="button"
                             onClick={() => triggerQuestion("switch")}
-                            className="px-6 py-3 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--input-bg)] transition-colors text-sm font-medium uppercase tracking-wider focus-ring"
+                            className="border-2 border-[var(--primary)] text-[var(--primary)] px-8 py-3 rounded-lg hover:bg-[var(--primary)] hover:text-[var(--primary-fg)] active:scale-[0.98] transition-all font-semibold text-sm shadow-sm hover:shadow-md focus-ring uppercase tracking-widest"
                         >
-                            Switch Subtopic
+                            Go to Other Topics
                         </button>
                         
                         <div className="text-[10px] text-[var(--muted)] uppercase tracking-widest hidden md:block">
@@ -330,7 +408,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
                             disabled={!currentSegment}
                             className="bg-[var(--primary)] text-[var(--primary-fg)] px-8 py-3 rounded-lg hover:opacity-90 active:scale-[0.98] transition-all font-semibold text-sm shadow-md hover:shadow-lg focus-ring uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {currentSegmentIndex < segments.length - 1 ? "Next Segment" : "Finish Subtopic"}
+                            Read the Next Article
                         </button>
                     </div>
                 </div>

@@ -37,6 +37,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
+        console.log("Received vocab submission:", JSON.stringify(body, null, 2));
         const { participantId, responses } = body;
 
         // responses: Array of { questionId, responseVal, isCorrect, reactionTimeMs }
@@ -50,16 +51,32 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid participant ID format" }, { status: 400 });
         }
 
+        console.log(`Saving ${responses.length} vocab responses for participant ${participantId}`);
+
         for (const r of responses) {
             // Extract number from "1 - speak..."
             // Frontend sends "1 - speak...", we want just the number part as INT
-            const optionNum = parseInt(r.responseVal.split(' - ')[0]);
+            let optionNum = 0;
+            if (typeof r.responseVal === 'string') {
+                optionNum = parseInt(r.responseVal.split(' - ')[0], 10);
+            }
+            
+            if (isNaN(optionNum)) {
+                console.warn(`Invalid response value: ${r.responseVal} for question ${r.questionId}`);
+                continue; // Skip invalid response
+            }
 
             await query(
                 `INSERT INTO part_c_vocabulary_responses 
                 (participant_id, question_id, response_option, is_correct, reaction_time_ms) 
                 VALUES (?, ?, ?, ?, ?)`,
-                [participantId, r.questionId, optionNum, r.isCorrect, r.reactionTimeMs]
+                [
+                    participantId, 
+                    String(r.questionId), 
+                    optionNum, 
+                    r.isCorrect ? 1 : 0, 
+                    r.reactionTimeMs
+                ]
             );
         }
 

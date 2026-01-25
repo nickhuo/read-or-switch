@@ -221,9 +221,18 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                     <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
                         Letter Comparison <span className="font-normal text-[var(--muted)] mx-2">/</span> Round {currentRound}
                     </h2>
-                    <p className="text-[var(--muted)] text-base max-w-md mx-auto">
-                        Quickly determine if the two character strings are identical or different.
-                    </p>
+                    <div className="text-[var(--muted)] text-base max-w-2xl mx-auto space-y-3">
+                        <p>
+                            And the same thing again, you will be asked to determine whether two letter strings are exactly the same or different.
+                        </p>
+                        <p>
+                            If these two letter strings are exactly the same, please select "S". If they are different, please select "D".
+                        </p>
+                        <p>
+                            Please do as fast as you can. Once you finish the task, please press the "DONE" button. We will record the time you complete the task.
+                        </p>
+                        <p className="font-semibold text-[var(--foreground)] pt-2">Ready?</p>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -251,7 +260,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                                 <div className="flex items-center gap-2 shrink-0 z-10">
                                     <button
                                         type="button"
-                                        aria-label="Same (Y)"
+                                        aria-label="Same (S)"
                                         onClick={(event) => handleLetterResponse(event, absoluteId, "S", prob)}
                                         className={`
                                             h-10 w-10 rounded-lg text-sm font-semibold transition-all duration-200 border flex items-center justify-center
@@ -261,11 +270,11 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                                             }
                                         `}
                                     >
-                                        Y
+                                        S
                                     </button>
                                     <button
                                         type="button"
-                                        aria-label="Different (N)"
+                                        aria-label="Different (D)"
                                         onClick={(event) => handleLetterResponse(event, absoluteId, "D", prob)}
                                         className={`
                                             h-10 w-10 rounded-lg text-sm font-semibold transition-all duration-200 border flex items-center justify-center
@@ -275,7 +284,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
                                             }
                                         `}
                                     >
-                                        N
+                                        D
                                     </button>
                                 </div>
 
@@ -320,7 +329,18 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
         return (
             <div className="max-w-6xl mx-auto glass-panel p-10 rounded-xl shadow-sm mt-12">
                 <div className="mb-8 border-l-4 border-[var(--foreground)] pl-4">
-                    <h2 className="text-2xl font-semibold mb-2 text-[var(--foreground)]">Vocabulary Task</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-[var(--foreground)]">Vocabulary Task</h2>
+                    <div className="text-[var(--muted)] text-lg space-y-4">
+                        <p>
+                            This is a test of your knowledge of word meanings. One of the five words has the same meaning or nearly the same meaning as the word above the five words.
+                        </p>
+                        <p>
+                            Please select the best answer.
+                        </p>
+                        <p>
+                            Please select "Not sure about the answer" if you are not sure about the correct answer. It will not be your advantage to guess.
+                        </p>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

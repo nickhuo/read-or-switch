@@ -530,3 +530,12 @@ CREATE TABLE `part_c_formal_responses` (
 
 
 
+
+DROP TABLE IF EXISTS part_c_summaries;
+CREATE TABLE IF NOT EXISTS part_c_summaries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    participant_id BIGINT NOT NULL,
+    content TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (participant_id) REFERENCES participants(participant_id)
+);

@@ -23,11 +23,11 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    fetch(`/api/part-b/stories?phase=${phase}`)
+    fetch(`/api/part-b/stories?phase=${phase}&participantId=${participantId}`)
       .then(res => res.json())
       .then(data => setStories(data))
       .catch(err => console.error(err));
-  }, [phase]);
+  }, [phase, participantId]);
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
