@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useEffect, useRef, useState } from "react";
 import type { Segment, Story } from "../types";
@@ -23,7 +24,7 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    fetch(`/api/part-b/stories?phase=${phase}&participantId=${participantId}`)
+    fetch(getApiPath(`/api/part-b/stories?phase=${phase}&participantId=${participantId}`))
       .then(res => res.json())
       .then(data => setStories(data))
       .catch(err => console.error(err));
@@ -66,7 +67,7 @@ export default function StoryReading({ participantId, phase, durationSeconds, on
     setCurrentSegmentIndex(0);
     
     try {
-      const res = await fetch(`/api/part-b/segments?storyId=${story.id}&phase=${phase}&participantId=${participantId}`);
+      const res = await fetch(getApiPath(`/api/part-b/segments?storyId=${story.id}&phase=${phase}&participantId=${participantId}`));
       if (!res.ok) throw new Error("Failed to fetch segments");
       const data = await res.json();
       

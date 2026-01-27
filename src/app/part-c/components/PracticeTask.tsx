@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { Question } from "../../part-b/types";
@@ -49,7 +50,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     useEffect(() => {
         // Fetch all subtopics directly
-        fetch("/api/part-c/subtopics?phase=practice")
+        fetch(getApiPath("/api/part-c/subtopics?phase=practice"))
             .then(res => res.json())
             .then(data => setSubtopics(data))
             .catch(err => console.error(err));
@@ -57,7 +58,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
 
     const [allQuestions, setAllQuestions] = useState<Question[]>([]);
     useEffect(() => {
-        fetch("/api/part-c/questions?phase=practice")
+        fetch(getApiPath("/api/part-c/questions?phase=practice"))
             .then(res => res.json())
             .then(data => setAllQuestions(data))
             .catch(err => console.error(err));
@@ -71,7 +72,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
         setCurrentSubtopic(subtopic);
 
         try {
-            const res = await fetch(`/api/part-c/segments?storyId=${subtopic.topic_id}&subtopicId=${subtopic.id}&phase=practice&participantId=${participantId}`);
+            const res = await fetch(getApiPath(`/api/part-c/segments?storyId=${subtopic.topic_id}&subtopicId=${subtopic.id}&phase=practice&participantId=${participantId}`));
             const data = await res.json();
             setSegments(data);
 
@@ -100,7 +101,7 @@ export default function PracticeTask({ participantId, onComplete }: PracticeTask
         const passRT = Date.now() - (readingStartTime || Date.now());
 
         try {
-            await fetch("/api/part-c/submit", {
+            await fetch(getApiPath("/api/part-c/submit"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

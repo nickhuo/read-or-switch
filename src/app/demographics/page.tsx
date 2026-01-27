@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -84,7 +85,7 @@ function DemographicsForm() {
 
         try {
             const [dobYear, dobMonth, dobDay] = formData.dob.split("-");
-            const res = await fetch("/api/demographics", {
+            const res = await fetch(getApiPath("/api/demographics"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

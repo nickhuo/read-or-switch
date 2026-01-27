@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useState } from "react";
 import type { ChangeEvent, MouseEvent } from "react";
@@ -88,7 +89,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
     // Better to fetch when entering vocab phase to ensure latest.
     const fetchVocabQuestions = async () => {
         try {
-            const res = await fetch("/api/part-c/cognitive/vocab");
+            const res = await fetch(getApiPath("/api/part-c/cognitive/vocab"));
             const data = await res.json();
             if (data.questions) {
                 setVocabQuestions(data.questions);
@@ -129,7 +130,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
         } else {
             // Submit all data and move to Vocab
             try {
-                const res = await fetch("/api/part-c/cognitive/letter", {
+                const res = await fetch(getApiPath("/api/part-c/cognitive/letter"), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ participantId, responses: letterData })
@@ -171,7 +172,7 @@ export default function CognitiveTests({ participantId, onComplete }: CognitiveT
 
     const handleVocabSubmit = async () => {
         try {
-            const res = await fetch("/api/part-c/cognitive/vocab", {
+            const res = await fetch(getApiPath("/api/part-c/cognitive/vocab"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ participantId, responses: vocabData })

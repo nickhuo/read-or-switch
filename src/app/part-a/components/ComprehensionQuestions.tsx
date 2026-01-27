@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useState, useEffect } from "react";
 
@@ -24,7 +25,7 @@ export default function ComprehensionQuestions({ participantId, onComplete }: Pa
     const [startTime, setStartTime] = useState(0);
 
     useEffect(() => {
-        fetch("/api/part-a/questions")
+        fetch(getApiPath("/api/part-a/questions"))
             .then(res => res.json())
             .then(data => {
                 setQuestions(data);
@@ -50,7 +51,7 @@ export default function ComprehensionQuestions({ participantId, onComplete }: Pa
         }));
 
         try {
-            await fetch("/api/part-a/submit-questions", {
+            await fetch(getApiPath("/api/part-a/submit-questions"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

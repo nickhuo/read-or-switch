@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useState } from "react";
 
@@ -15,7 +16,7 @@ export default function SummaryInput({ participantId, phase, onComplete }: Summa
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
-            await fetch("/api/part-b/submit", {
+            await fetch(getApiPath("/api/part-b/submit"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

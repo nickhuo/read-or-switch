@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useEffect, useState, useRef } from "react";
 import { Story, Segment, Question } from "../../part-b/types";
@@ -41,7 +42,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
 
     useEffect(() => {
         // Fetch all subtopics directly
-        fetch("/api/part-c/subtopics?phase=formal")
+        fetch(getApiPath("/api/part-c/subtopics?phase=formal"))
             .then(res => res.json())
             .then(data => setSubtopics(data))
             .catch(err => console.error("Failed to fetch subtopics", err));
@@ -50,7 +51,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
     // Fetch all Formal questions
     const [allQuestions, setAllQuestions] = useState<Question[]>([]);
     useEffect(() => {
-        fetch("/api/part-c/questions?phase=formal")
+        fetch(getApiPath("/api/part-c/questions?phase=formal"))
             .then(res => res.json())
             .then(data => setAllQuestions(data))
             .catch(err => console.error(err));
@@ -89,7 +90,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
 
         try {
             // Need topicId for the segments API? Yes, it corresponds to 'storyId' param which maps to 'topID'
-            const res = await fetch(`/api/part-c/segments?storyId=${subtopic.topic_id}&subtopicId=${subtopic.id}&phase=formal&participantId=${participantId}`);
+            const res = await fetch(getApiPath(`/api/part-c/segments?storyId=${subtopic.topic_id}&subtopicId=${subtopic.id}&phase=formal&participantId=${participantId}`));
             const data = await res.json();
             setSegments(data);
 
@@ -126,7 +127,7 @@ export default function FormalTask({ participantId, onComplete }: FormalTaskProp
         const passRT = Date.now() - (readingStartTime || Date.now());
 
         try {
-            await fetch("/api/part-c/submit", {
+            await fetch(getApiPath("/api/part-c/submit"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -47,7 +48,7 @@ function PartAContent() {
     useEffect(() => {
         async function fetchSentences() { // ... no change
             try {
-                const res = await fetch("/api/sentences");
+                const res = await fetch(getApiPath("/api/sentences"));
                 if (!res.ok) throw new Error("Failed to fetch");
                 const data: Sentence[] = await res.json();
 
@@ -126,7 +127,7 @@ function PartAContent() {
     const logAction = useCallback(async (action: "continue" | "switch" | "start_set" | "word_reveal", wordIndex?: number) => {
         if (!participantId || !currentSetId) return;
         try {
-            await fetch("/api/part-a/log", {
+            await fetch(getApiPath("/api/part-a/log"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -1,4 +1,5 @@
 "use client";
+import { getApiPath } from "@/lib/api";
 
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
@@ -29,7 +30,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
         startTimeRef.current = performance.now();
 
         // Fetch questions for this participant (based on what they read in Formal phase)
-        fetch(`/api/part-c/questions?phase=formal&participantId=${participantId}`)
+        fetch(getApiPath(`/api/part-c/questions?phase=formal&participantId=${participantId}`))
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -50,7 +51,8 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
 
         setResponseData(prev => {
             const filtered = prev.filter(p => p.questionId !== questionId);
-            const q = questions.find(qq => String(qq.id) === questionId); // Use 'id' from Question type (which might be story_id? No, Question type usually has id or questionID)
+            // Use questionID if available (from part_c_questions), otherwise fallback to id
+            const q = questions.find(qq => String((qq as any).questionID || qq.id) === questionId);
 
             // Note: Question interface in part-b/types usually has 'id'. 
             // In DB it is questionID. The query returns columns.
@@ -119,7 +121,7 @@ export default function FinalAssessment({ participantId, onComplete }: FinalAsse
 
     const handleSubmit = async () => {
         try {
-            await fetch("/api/part-c/final", {
+            await fetch(getApiPath("/api/part-c/final"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ participantId, responses: responseData })

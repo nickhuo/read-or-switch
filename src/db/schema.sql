@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS `read-or-switch`;
-USE `read-or-switch`;
+CREATE DATABASE IF NOT EXISTS `actionlabstudy_story_foraging_study`;
+USE `actionlabstudy_story_foraging_study`;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS participants;
