@@ -17,7 +17,7 @@ if (fs.existsSync(envPath)) {
         }
     });
 } else {
-    console.error(".env.local not found!");
+    console.log(".env.local not found — using process env directly.");
 }
 
 const dbConfig = {
@@ -25,6 +25,7 @@ const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : undefined,
     multipleStatements: true
 };
 
